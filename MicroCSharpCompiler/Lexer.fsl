@@ -1,0 +1,44 @@
+﻿{
+module Lexer
+open System
+open Parser
+open Microsoft.FSharp.Text.Lexing
+
+let lexeme lexbuf =
+    LexBuffer<char>.LexemeString lexbuf
+}
+
+// These are some regular expression definitions
+let name = ['a'-'z' 'A'-'Z' '0'-'9' '.']
+let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+rule tokenize = parse
+| whitespace	{ tokenize lexbuf }
+| newline       { tokenize lexbuf }
+//Keywords
+| "using"		{ USING }
+| "namespace"	{ NAMESPACE  }
+| "class"		{ CLASS  }
+| "interface"   { INTERFACE }
+| "struct"		{ STRUCT }
+| "enum"		{ ENUM }
+//
+| ("public"|"private"|"internal"|"protected") { ACCESSMODIFIER (lexeme lexbuf) }
+// TODO Remove ;)
+| "null"		{ NULL }
+| "void"		{ VOID }
+//Noise
+| "{"			{ LCURLY }
+| "}"			{ RCURLY }
+| "("			{ LPAREN }
+| ")"			{ RPAREN }
+| ";"			{ SEMICOLON }
+| ","			{ COMMA }
+
+| name+			{ NAME (lexeme lexbuf)}
+
+// EOF
+| eof   { EOF }
+

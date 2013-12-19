@@ -1,0 +1,82 @@
+﻿%{
+
+open Ast
+
+%}
+
+// The start token becomes a parser function in the compiled code:
+%start start
+
+// These are the terminal tokens of the grammar along with the types of
+// the data carried by each token:
+%token <string> NAME
+
+//Keywords
+%token USING
+%token NAMESPACE
+%token CLASS INTERFACE STRUCT ENUM
+
+%token <string> ACCESSMODIFIER
+
+//Language Wrongness
+%token NULL VOID
+
+//Language noise
+%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA
+
+%token EOF
+
+// This is the type of the data produced by a successful reduction of the 'start'
+// symbol:
+%type < Ast.File > start
+
+%%
+
+// These are the rules of the grammar along with the F# code of the 
+// actions executed as rules are reduced.  In this case the actions 
+// produce data using F# data construction terms.
+start: FileBodyList { File($1) }
+
+//File Body contents list
+FileBodyList:
+	|						{ [] }
+	| FileBody				{ [$1] }
+	| FileBody FileBodyList { $1 :: $2 }
+
+//Legal contents of the file body
+FileBody:
+	| USING NAME SEMICOLON								{ Using($2) }
+    | NAMESPACE	NAME LCURLY NamespaceBodyList RCURLY	{ Namespace($2, $4) }
+
+NamespaceBodyList:
+	|									{ [] }
+	| NamespaceBody						{ [$1] }
+	| NamespaceBody NamespaceBodyList	{ $1 :: $2 }
+NamespaceBody:
+	//Can probably boil this down and make visibility optional - dont know how yet
+	| CLASS NAME LCURLY RCURLY		{ Class($2, AccessModifier.Internal) }
+	| ACCESSMODIFIER CLASS NAME LCURLY RCURLY		{ Class($3, AstHelpers.toAccessModifier($1)) }
+	| INTERFACE NAME LCURLY InterfaceBodyList RCURLY	{ Interface($2, AccessModifier.Internal, $4) }
+	| ACCESSMODIFIER INTERFACE NAME LCURLY InterfaceBodyList RCURLY	{ Interface($3, AstHelpers.toAccessModifier($1), $5) }
+	| STRUCT NAME LCURLY RCURLY		{ Struct($2, AccessModifier.Internal) }
+	| ACCESSMODIFIER STRUCT NAME LCURLY RCURLY		{ Struct($3, AstHelpers.toAccessModifier($1)) }
+	| ENUM NAME LCURLY EnumBodyList	RCURLY { Enum($2, AccessModifier.Internal, $4) }
+	| ACCESSMODIFIER ENUM NAME LCURLY EnumBodyList	RCURLY { Enum($3, AstHelpers.toAccessModifier($1), $5) }
+
+InterfaceBodyList:
+	|									{ [] }
+	| InterfaceBody						{ [$1] }
+	| InterfaceBody InterfaceBodyList	{ $1 :: $2 }
+
+InterfaceBody:
+	| NAME NAME LPAREN RPAREN SEMICOLON			{ Method($1, $2) } //Todo parameters
+
+EnumBodyList:
+	|							{ [] }
+	| EnumBody					{ [$1] }
+	| EnumBody EnumBodyList		{ $1 :: $2 }
+
+EnumBody:
+	//OR NAME???
+	| NAME COMMA				{ $1 }
+	| NAME						{ $1 }
