@@ -22,9 +22,10 @@ let resolveType name usings =
     | _ -> failwith "Unrecognized type"
 
 let compileInterface (tb:TypeBuilder) body usings= 
-    body|>List.iter(fun (Method(returnType, name)) -> 
+    body|>List.iter(fun (Method(returnType, name, parameters)) -> 
                     ignore<| match resolveType returnType usings with
-                             | Some(returnType) -> tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual, returnType, [||]) 
+                             | Some(returnType) -> tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual, returnType, 
+                                                                   parameters|>List.choose(fun (Parameter(typeName, name)) -> resolveType typeName usings)|>List.toArray) 
                              | None ->  tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual))
     tb
 

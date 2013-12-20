@@ -21,8 +21,10 @@ and ClassBody =
 | Event of Name
 | Method of Name
 and InterfaceBody =
-| Method of TypeName * Name //todo parameters
+| Method of TypeName * Name * Parameter list
 //| Property, Event, yada yada
+and Parameter = 
+| Parameter of TypeName * Name
 
 module AstHelpers = 
     let toAccessModifier = function

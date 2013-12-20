@@ -18,7 +18,7 @@ namespace TestNamespace
 {
     public interface TestInterface
     {
-        int DoSomething();
+        int DoSomething(int hello, double goodbye);
     }
 
     class TestClass

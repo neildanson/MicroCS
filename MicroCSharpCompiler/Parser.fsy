@@ -69,7 +69,7 @@ InterfaceBodyList:
 	| InterfaceBody InterfaceBodyList	{ $1 :: $2 }
 
 InterfaceBody:
-	| NAME NAME LPAREN RPAREN SEMICOLON			{ Method($1, $2) } //Todo parameters
+	| NAME NAME LPAREN ParameterBodyList RPAREN SEMICOLON			{ Method($1, $2, $4) } 
 
 EnumBodyList:
 	|							{ [] }
@@ -80,3 +80,13 @@ EnumBody:
 	//OR NAME???
 	| NAME COMMA				{ $1 }
 	| NAME						{ $1 }
+
+ParameterBodyList:
+	|									{ [] }
+	| ParameterBody						{ [$1] }
+	| ParameterBody ParameterBodyList	{ $1 :: $2 }
+
+ParameterBody:
+	//OR NAME???
+	| NAME NAME COMMA				{ Parameter($1, $2) }
+	| NAME NAME						{ Parameter($1, $2) }
