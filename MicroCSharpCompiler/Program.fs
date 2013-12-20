@@ -6,6 +6,7 @@
 open System
 open Microsoft.FSharp.Text.Lexing
 open Ast
+open PreCompileAst
 open Compiler
 open Lexer
 open Parser
@@ -26,17 +27,20 @@ namespace TestNamespace
 
     internal enum TestEnum 
     {
-        Value1, Value2, Terminator
+        Value1, Value2, Terminator, Terminator2
     }
 }
 """
+let parse input = LexBuffer<char>.FromString(input) 
 
 let Compile() =
-    let lexbuff = LexBuffer<char>.FromString(cSharpProgram)
+    let tokenized = parse cSharpProgram
     
     printfn "Parsing..."
-    let ast = Parser.start Lexer.tokenize lexbuff
+    let ast = Parser.start Lexer.tokenize tokenized
     printfn "Compiling..."
-    compile ast       
+    let ab, pcAst = preCompile ast "CSharpCompilerExample"
+    compile pcAst
+    ab.Save("CSharpCompilerExample.dll")
   
 Compile()

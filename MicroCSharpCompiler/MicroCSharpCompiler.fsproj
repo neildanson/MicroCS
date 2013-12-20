@@ -55,6 +55,7 @@
       <Visible>false</Visible>
       <Link>Lexer.fs</Link>
     </Compile>
+    <Compile Include="PreCompileAst.fs" />
     <Compile Include="Compiler.fs" />
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module Parser</OtherFlags>
