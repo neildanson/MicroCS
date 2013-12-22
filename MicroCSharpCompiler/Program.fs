@@ -23,6 +23,10 @@ namespace TestNamespace
 
     class TestClass
     {
+        void DoSomething()
+        {
+            System.Diagnostics.Debug.WriteLine("Woohoo");
+        }
     }
 
     internal enum TestEnum 

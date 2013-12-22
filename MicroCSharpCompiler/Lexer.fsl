@@ -28,7 +28,6 @@ rule tokenize = parse
 | ("public"|"private"|"internal"|"protected") { ACCESSMODIFIER (lexeme lexbuf) }
 // TODO Remove ;)
 | "null"		{ NULL }
-| "void"		{ VOID }
 //Noise
 | "{"			{ LCURLY }
 | "}"			{ RCURLY }
@@ -36,6 +35,7 @@ rule tokenize = parse
 | ")"			{ RPAREN }
 | ";"			{ SEMICOLON }
 | ","			{ COMMA }
+| "\""			{ QUOTE }
 
 | name+			{ NAME (lexeme lexbuf)}
 

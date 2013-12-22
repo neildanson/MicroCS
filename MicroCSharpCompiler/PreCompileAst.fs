@@ -9,7 +9,7 @@ type PcFile =
 | PcFile of string list * PcNamespaceBody list
 and PcNamespaceBody = 
 | PcInterface of TypeBuilder * InterfaceBody list
-| PcClass of TypeBuilder
+| PcClass of TypeBuilder * ClassBody list
 | PcStruct of TypeBuilder
 | PcEnum of Type 
 
@@ -19,9 +19,15 @@ let accessModifierToTypeAttribute = function
 | Internal -> TypeAttributes.NotPublic
 | Protected -> failwith "Protected is not valid on Types"
 
+let accessModifierToMethodAttribute = function
+| Public -> MethodAttributes.Public
+| Private -> MethodAttributes.Private
+| Internal -> MethodAttributes.Assembly
+| Protected -> MethodAttributes.Family
+
 let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName) = 
     match body with
-    | Class(name, visibility) -> Some(mb.DefineType(namespaceName+"."+name, accessModifierToTypeAttribute visibility))
+    | Class(name, visibility, body) -> Some(mb.DefineType(namespaceName+"."+name, accessModifierToTypeAttribute visibility), body)
     | _ -> None
 
 let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName) = 
