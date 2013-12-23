@@ -37,6 +37,7 @@ let resolveType name usings =
     | "float" -> Some(typeof<float32>)
     | "double" -> Some(typeof<float>)
     | "string" -> Some(typeof<string>)
+    | "bool" -> Some(typeof<bool>)
     | _ -> failwith "Unrecognized type"
 
     

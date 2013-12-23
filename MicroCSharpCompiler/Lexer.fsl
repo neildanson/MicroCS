@@ -4,8 +4,7 @@ open System
 open Parser
 open Microsoft.FSharp.Text.Lexing
 
-let lexeme lexbuf =
-    LexBuffer<char>.LexemeString lexbuf
+let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
 }
 
 // These are some regular expression definitions
@@ -37,7 +36,11 @@ rule tokenize = parse
 | ","			{ COMMA }
 | "\""			{ QUOTE }
 
-| name+			{ NAME (lexeme lexbuf)}
+| name+											{ NAME (lexeme lexbuf) }
+| ['-']?digit+									{ INT (Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit+('.'digit+)?(['e''E']digit+)?		{ FLOAT (Single.Parse(lexeme lexbuf)) }
+| ("true"|"false")								{ BOOL (Boolean.Parse(lexeme lexbuf)) }
+
 
 // EOF
 | eof   { EOF }

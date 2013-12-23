@@ -30,6 +30,7 @@ and Expr =
 | Int of int
 | Float of float32
 | Double of float
+| Bool of bool
 | Call of Name * Expr list
 
 module AstHelpers = 
