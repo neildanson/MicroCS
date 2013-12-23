@@ -19,7 +19,7 @@ and ClassBody =
 | Field of Name
 | Property of Name
 | Event of Name
-| Method of AccessModifier * TypeName * Name * Parameter list * Expr list //TODO AccessModifier
+| Method of AccessModifier * TypeName * Name * Parameter list * Expr list 
 and InterfaceBody =
 | Method of TypeName * Name * Parameter list
 //| Property, Event, yada yada

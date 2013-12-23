@@ -8,10 +8,14 @@ open System.Reflection.Emit
 type PcFile = 
 | PcFile of string list * PcNamespaceBody list
 and PcNamespaceBody = 
-| PcInterface of TypeBuilder * InterfaceBody list
-| PcClass of TypeBuilder * ClassBody list
+| PcInterface of TypeBuilder * PcInterfaceBody list
+| PcClass of TypeBuilder * PcClassBody list
 | PcStruct of TypeBuilder
 | PcEnum of Type 
+and PcInterfaceBody =
+| PcMethod of Type option * Name * (Type * Name) list
+and PcClassBody = 
+| PcMethod of AccessModifier * Type option * Name * (Type * Name) list * Expr list 
 
 let accessModifierToTypeAttribute = function
 | Public -> TypeAttributes.Public
@@ -25,19 +29,50 @@ let accessModifierToMethodAttribute = function
 | Internal -> MethodAttributes.Assembly
 | Protected -> MethodAttributes.Family
 
-let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName) = 
+//TODO - lookup BCL types
+let resolveType name usings = 
+    match name with
+    | "void" -> None
+    | "int" -> Some(typeof<int>)
+    | "float" -> Some(typeof<float32>)
+    | "double" -> Some(typeof<float>)
+    | "string" -> Some(typeof<string>)
+    | _ -> failwith "Unrecognized type"
+
+    
+//TODO - walk all referenced assemblies
+let getTypeByName name = 
+    let t = Type.GetType name
+    t
+
+let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
     match body with
-    | Class(name, visibility, body) -> Some(mb.DefineType(namespaceName+"."+name, accessModifierToTypeAttribute visibility), body)
+    | Class(name, visibility, body) -> 
+        let definedType = mb.DefineType(namespaceName+"."+name, accessModifierToTypeAttribute visibility)
+        let body = body 
+                   |> List.map(fun (ClassBody.Method(acccessModifier, typename, name, parameters, exprList)) -> 
+                                        let returnType = resolveType typename usings
+                                        let parameters = parameters
+                                                         |>List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
+                                        PcClassBody.PcMethod(acccessModifier, returnType, name, parameters, exprList))
+        Some(definedType, body)
     | _ -> None
 
-let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName) = 
+let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
     match body with
     | Interface(name, visibility, body) -> 
-        Some(mb.DefineType(namespaceName+"."+name, TypeAttributes.Abstract ||| TypeAttributes.Interface ||| accessModifierToTypeAttribute visibility), body)
+        let definedType = mb.DefineType(namespaceName+"."+name, TypeAttributes.Abstract ||| TypeAttributes.Interface ||| accessModifierToTypeAttribute visibility)
+        let body = body 
+                   |> List.map(fun (Method(typename, name, parameters)) -> 
+                                        let returnType = resolveType typename usings
+                                        let parameters = parameters
+                                                         |>List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
+                                        PcInterfaceBody.PcMethod(returnType, name, parameters))
+        Some(definedType, body)
     | _ -> None
 
 //Rule break here - I just compile the Enums here - no point doing a 2 pass I think - maybe I'll change my mind later
-let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName) = 
+let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
     match body with
     | Enum(name, visibility, values) -> 
         let eb = mb.DefineEnum(namespaceName+"."+name, accessModifierToTypeAttribute visibility, typeof<int>)
@@ -45,8 +80,8 @@ let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName) =
         Some(eb.CreateType())
     | _ -> None
 
-let compileType mb namespaceBody namespaceName =
-    match (mb, namespaceBody, namespaceName) with
+let compileType mb namespaceBody namespaceName usings =
+    match (mb, namespaceBody, namespaceName, usings) with
     | CLASS(tb) -> Some(PcClass(tb))
     | INTERFACE(tb, body) -> Some(PcInterface(tb, body)) 
     | ENUM(tb) -> Some(PcEnum(tb))
@@ -54,13 +89,13 @@ let compileType mb namespaceBody namespaceName =
 
 let preCompile (ast: File) filename = 
     let aName = AssemblyName(filename)
-    let ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Save);
-    let mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll");
+    let ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Save)
+    let mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll")
     match ast with
     | File fileBody -> 
         let usings = fileBody |> List.choose(fun x -> match x with Using(using) -> Some(using) | _ -> None)
         let namespaces = fileBody |> List.choose(fun x -> match x with Namespace(name, bodyList) -> Some(name, bodyList) | _ -> None)
         ab, PcFile(usings, 
                     namespaces
-                    |>List.collect(fun (name, body) -> body|>List.choose(fun b -> compileType mb b name)))
+                    |>List.collect(fun (name, body) -> body|>List.choose(fun b -> compileType mb b name usings)))
         
