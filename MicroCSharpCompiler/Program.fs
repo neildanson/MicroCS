@@ -25,7 +25,9 @@ namespace TestNamespace
     {
         void DoSomething()
         {
-            System.Console.WriteLine("Woohoo");
+            string xxx = "foo";
+            System.Console.WriteLine(xxx);
+            System.Console.WriteLine(xxx);
         }
     }
 

@@ -25,7 +25,7 @@ open Ast
 %token NULL
 
 //Language noise
-%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE
+%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS
 
 %token EOF
 
@@ -89,10 +89,13 @@ ExprList:
 
 Expr:
 	| NAME LPAREN ParameterExprList RPAREN SEMICOLON	{ Call($1, $3) }
-	| QUOTE NAME QUOTE				{ String($2) }
-	| INT							{ Int($1) }
-	| FLOAT							{ Float($1) }
-	| BOOL							{ Bool($1) }
+	| QUOTE NAME QUOTE					{ String($2) }
+	| INT								{ Int($1) }
+	| FLOAT								{ Float($1) }
+	| BOOL								{ Bool($1) }
+	| NAME								{ Ref($1) }
+	| NAME NAME EQUALS Expr SEMICOLON	{ Var ($1, $2, Some($4)) }
+	| NAME NAME	SEMICOLON				{ Var ($1, $2, None) }
 
 EnumBodyList:
 	|							{ [] }

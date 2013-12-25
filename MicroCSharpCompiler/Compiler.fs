@@ -10,20 +10,32 @@ open PreCompileAst
 //Things to consider:
 //EnumBuilder and TypeBuilder both need to CreateType, but method defined seperately
 
-let rec eval (il:ILGenerator) = function
+let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) = function
     | Call(name, parameters) -> 
-        parameters|>List.iter(fun p -> eval il p)
+        let vars = parameters|>List.fold(fun v p -> eval il v p) vars
         let className = name.Substring(0,name.LastIndexOf("."))
         let methodName = name.Substring(name.LastIndexOf(".")+1)
         System.Console.WriteLine(sprintf "c:%s m:%s" className methodName)
         let typeOf = getTypeByName className
         let mi = typeOf.GetMethod(methodName, [|typeof<string>|])
         il.EmitCall(OpCodes.Call, mi, null)  
-
-        let local = il.DeclareLocal(typeof<string>)
-        il.EmitWriteLine local
-        ()
+        vars
     | String(s) -> il.Emit(OpCodes.Ldstr,s)
+                   vars
+    | Int(i) -> il.Emit(OpCodes.Ldc_I4, i)
+                vars
+    | Ref(name) -> 
+        il.Emit(OpCodes.Ldloc, vars.[name])
+        vars
+    | Var(typeName, name, expr) -> 
+        let local = il.DeclareLocal(typeof<string>)
+        local.SetLocalSymInfo(name)
+        match expr with 
+        | Some(expr) -> let vars = eval il vars expr
+                        il.Emit(OpCodes.Stloc, local)
+                        vars.Add(name, local)
+        | _ -> vars
+        
     | _ -> failwith "Currently unsupported"
 
 let compileInterface (tb:TypeBuilder) body usings= 
@@ -38,11 +50,11 @@ let compileMethod (mb:MethodBuilder) (exprList:Expr list) usings =
     let il = mb.GetILGenerator()
     usings|>List.iter (fun using -> il.UsingNamespace using)
     
-    exprList|>List.iter(fun expr -> eval il expr)
+    exprList|>List.fold(fun vars expr -> eval il vars expr) Map.empty
     
 
 let compileClass (tb:TypeBuilder) body usings= 
-    body|>List.iter(fun (PcClassBody.PcMethod(modifier, returnType, name, parameters, body)) -> 
+    body|>List.iter(fun (PcClassBody.PcMethod(modifier, returnType, name, parameters, body)) -> ignore <|
                         compileMethod
                             (match returnType with
                              | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 

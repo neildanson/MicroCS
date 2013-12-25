@@ -90,8 +90,8 @@ let compileType mb namespaceBody namespaceName usings =
 
 let preCompile (ast: File) filename = 
     let aName = AssemblyName(filename)
-    let ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Save)
-    let mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll")
+    let ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.RunAndSave)
+    let mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll", true) //true means debug it seems
     match ast with
     | File fileBody -> 
         let usings = fileBody |> List.choose(fun x -> match x with Using(using) -> Some(using) | _ -> None)
