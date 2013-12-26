@@ -1,21 +1,21 @@
-﻿module PreCompileAst
+﻿module TypedAst
 
 open Ast
 open System
 open System.Reflection
 open System.Reflection.Emit
 
-type PcFile = 
-| PcFile of string list * PcNamespaceBody list
-and PcNamespaceBody = 
-| PcInterface of TypeBuilder * PcInterfaceBody list
-| PcClass of TypeBuilder * PcClassBody list
-| PcStruct of TypeBuilder
-| PcEnum of Type 
-and PcInterfaceBody =
-| PcMethod of Type option * Name * (Type * Name) list
-and PcClassBody = 
-| PcMethod of AccessModifier * Type option * Name * (Type * Name) list * Expr list 
+type TFile = 
+| TFile of string list * TNamespaceBody list
+and TNamespaceBody = 
+| TInterface of TypeBuilder * TInterfaceBody list
+| TClass of TypeBuilder * TClassBody list
+| TStruct of TypeBuilder
+| TEnum of Type 
+and TInterfaceBody =
+| TMethod of Type option * Name * (Type * Name) list
+and TClassBody = 
+| TMethod of AccessModifier * Type option * Name * (Type * Name) list * Expr list 
 
 let accessModifierToTypeAttribute = function
 | Public -> TypeAttributes.Public
@@ -55,7 +55,7 @@ let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
                                         let returnType = resolveType typename usings
                                         let parameters = parameters
                                                          |>List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
-                                        PcClassBody.PcMethod(acccessModifier, returnType, name, parameters, exprList))
+                                        TClassBody.TMethod(acccessModifier, returnType, name, parameters, exprList))
         Some(definedType, body)
     | _ -> None
 
@@ -68,7 +68,7 @@ let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings
                                         let returnType = resolveType typename usings
                                         let parameters = parameters
                                                          |>List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
-                                        PcInterfaceBody.PcMethod(returnType, name, parameters))
+                                        TInterfaceBody.TMethod(returnType, name, parameters))
         Some(definedType, body)
     | _ -> None
 
@@ -83,9 +83,9 @@ let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
 
 let compileType mb namespaceBody namespaceName usings =
     match (mb, namespaceBody, namespaceName, usings) with
-    | CLASS(tb) -> Some(PcClass(tb))
-    | INTERFACE(tb, body) -> Some(PcInterface(tb, body)) 
-    | ENUM(tb) -> Some(PcEnum(tb))
+    | CLASS(tb) -> Some(TClass(tb))
+    | INTERFACE(tb, body) -> Some(TInterface(tb, body)) 
+    | ENUM(tb) -> Some(TEnum(tb))
     | _ -> failwith "Unrecognized Namespace Body"
 
 let preCompile (ast: File) filename = 
@@ -96,7 +96,7 @@ let preCompile (ast: File) filename =
     | File fileBody -> 
         let usings = fileBody |> List.choose(fun x -> match x with Using(using) -> Some(using) | _ -> None)
         let namespaces = fileBody |> List.choose(fun x -> match x with Namespace(name, bodyList) -> Some(name, bodyList) | _ -> None)
-        ab, PcFile(usings, 
+        ab, TFile(usings, 
                     namespaces
                     |>List.collect(fun (name, body) -> body|>List.choose(fun b -> compileType mb b name usings)))
         

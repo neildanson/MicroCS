@@ -6,7 +6,7 @@
 open System
 open Microsoft.FSharp.Text.Lexing
 open Ast
-open PreCompileAst
+open TypedAst
 open Compiler
 open Lexer
 open Parser

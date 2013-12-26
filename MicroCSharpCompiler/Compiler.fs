@@ -5,7 +5,7 @@ open System.Reflection
 open System.Reflection.Emit
 
 open Ast
-open PreCompileAst
+open TypedAst
 
 //Things to consider:
 //EnumBuilder and TypeBuilder both need to CreateType, but method defined seperately
@@ -43,7 +43,7 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) = function
     | _ -> failwith "Currently unsupported"
 
 let compileInterface (tb:TypeBuilder) body usings= 
-    body|>List.iter(fun (PcInterfaceBody.PcMethod(returnType, name, parameters)) -> 
+    body|>List.iter(fun (TInterfaceBody.TMethod(returnType, name, parameters)) -> 
                     ignore<| match returnType with
                              | Some(returnType) -> tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual, returnType, 
                                                                    parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 
@@ -58,7 +58,7 @@ let compileMethod (mb:MethodBuilder) (exprList:Expr list) usings =
     
 
 let compileClass (tb:TypeBuilder) body usings= 
-    body|>List.iter(fun (PcClassBody.PcMethod(modifier, returnType, name, parameters, body)) -> ignore <|
+    body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) -> ignore <|
                         compileMethod
                             (match returnType with
                              | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 
@@ -67,16 +67,16 @@ let compileClass (tb:TypeBuilder) body usings=
     tb
 
 let compileType usings = function
-    | PcInterface(tb, body) -> Some(compileInterface tb body usings)
-    | PcClass(tb, body) -> Some(compileClass tb body usings)
-    | PcStruct(tb) -> Some(tb)
-    | PcEnum(_) -> None (*enums already compiled*)
+    | TInterface(tb, body) -> Some(compileInterface tb body usings)
+    | TClass(tb, body) -> Some(compileClass tb body usings)
+    | TStruct(tb) -> Some(tb)
+    | TEnum(_) -> None (*enums already compiled*)
 
-let compileFile(PcFile(usings, body)) = 
+let compileFile(TFile(usings, body)) = 
     body
     |>List.choose(fun b -> compileType usings b)
     |>List.iter(fun tb -> tb.CreateType() |> ignore)
 
-let compile (ast: PcFile) = 
+let compile (ast: TFile) = 
     compileFile ast
 
