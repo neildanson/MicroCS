@@ -34,6 +34,7 @@ and Expr =
 | Double of float
 | Bool of bool
 | Call of Name * Expr list
+| Add of Expr * Expr
 
 module AstHelpers = 
     let toAccessModifier = function

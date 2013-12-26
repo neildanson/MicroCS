@@ -36,6 +36,7 @@ rule tokenize = parse
 | ","			{ COMMA }
 | "\""			{ QUOTE }
 | "="			{ EQUALS }
+| "+"			{ ADD } 
 
 | name+											{ NAME (lexeme lexbuf) }
 | ['-']?digit+									{ INT (Int32.Parse(lexeme lexbuf)) }

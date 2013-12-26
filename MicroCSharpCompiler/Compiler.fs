@@ -35,7 +35,11 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) = function
                         il.Emit(OpCodes.Stloc, local)
                         vars.Add(name, local)
         | _ -> vars
-        
+    | Add(expr, expr') -> 
+        let vars = eval il vars expr
+        let vars = eval il vars expr'
+        il.Emit(OpCodes.Add)
+        vars 
     | _ -> failwith "Currently unsupported"
 
 let compileInterface (tb:TypeBuilder) body usings= 
