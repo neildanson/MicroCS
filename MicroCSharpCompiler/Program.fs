@@ -4,6 +4,8 @@
 // This posting is provided "AS IS" with no warranties, and confers no rights.
 
 open System
+open System.Reflection
+open System.Diagnostics
 open Microsoft.FSharp.Text.Lexing
 open Ast
 open TypedAst
@@ -40,13 +42,18 @@ namespace TestNamespace
 let parse input = LexBuffer<char>.FromString(input) 
 
 let Compile() =
+    let xmlAssembly = Assembly.LoadWithPartialName "System.Xml"
     let tokenized = parse cSharpProgram
-    
+    let sw = Stopwatch()
+    sw.Restart()
     printfn "Parsing..."
     let ast = Parser.start Lexer.tokenize tokenized
     printfn "Compiling..."
     let ab, pcAst = preCompile ast "CSharpCompilerExample"
     compile pcAst
+    printf "Time to Compile %dms" sw.ElapsedMilliseconds
     ab.Save("CSharpCompilerExample.dll")
-  
+    Console.ReadLine() |> ignore
+
+IO.File.Delete("CSharpCompilerExample.dll")
 Compile()

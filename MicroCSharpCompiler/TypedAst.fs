@@ -15,7 +15,7 @@ and TNamespaceBody =
 and TInterfaceBody =
 | TMethod of Type option * Name * (Type * Name) list
 and TClassBody = 
-| TMethod of AccessModifier * Type option * Name * (Type * Name) list * Expr list 
+| TMethod of AccessModifier * Type option * Name * (Type * Name) list * TExpr list 
 and TExpr = 
 | TVar of Type * Name * TExpr option
 //Are the following needed?
@@ -26,7 +26,7 @@ and TExpr =
 | TDouble of float
 | TBool of bool
 //End
-| TCall of Name * TExpr list
+| TCall of Name * TExpr list //Name should be MethodInfo
 | TAdd of TExpr * TExpr
 
 let accessModifierToTypeAttribute = function
@@ -75,13 +75,29 @@ let resolveType name usings =
         if t <> null then Some(t) 
         else failwith "Unrecognized type"
 
+let rec toTypedExpr usings = function
+     | Var(typeName, name, expr) -> 
+        let t = resolveType typeName usings
+        match t with
+        | Some(t) -> TVar(t, name, expr|>Option.map(fun e -> toTypedExpr usings e))
+        | None -> failwith "void not a valid type for a variable" 
+     | Ref(name) -> TRef(name)
+     | String(s) -> TString(s)
+     | Int(i) -> TInt(i)
+     | Float(f) -> TFloat(f)
+     | Double(d) -> TDouble(d)
+     | Bool(b) -> TBool(b)
+     | Call(name, parameters) -> 
+        //TODO Should determine here if this is a static or an instance call
+        TCall(name, parameters |> List.map(fun p -> toTypedExpr usings p)) 
+     | Add(expr, expr') -> TAdd(toTypedExpr usings expr, toTypedExpr usings expr') 
 
 let (|CLASSMETHOD|_|) (b, usings) = 
     match b with
     | ClassBody.Method(acccessModifier, typename, name, parameters, exprList) -> 
         let returnType = resolveType typename usings
         let parameters = parameters |> List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
-        Some(TClassBody.TMethod(acccessModifier, returnType, name, parameters, exprList))
+        Some(TClassBody.TMethod(acccessModifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings e)))
     | _ -> None
 
 let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 

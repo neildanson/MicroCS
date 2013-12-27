@@ -11,23 +11,22 @@ open TypedAst
 //EnumBuilder and TypeBuilder both need to CreateType, but method defined seperately
 
 let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (usings:string list) = function
-    | Call(name, parameters) -> 
+    | TCall(name, parameters) -> 
         let vars = parameters|>List.fold(fun v p -> eval il v usings p) vars 
         let className = name.Substring(0,name.LastIndexOf("."))
-        let methodName = name.Substring(name.LastIndexOf(".")+1)
-        System.Console.WriteLine(sprintf "c:%s m:%s" className methodName)
+        let methodName = name.Substring(name.LastIndexOf(".") + 1 )
         let typeOf = getTypeByName className usings
         let mi = typeOf.GetMethod(methodName, [|typeof<string>|])
         il.EmitCall(OpCodes.Call, mi, null)  
         vars
-    | String(s) -> il.Emit(OpCodes.Ldstr,s)
-                   vars
-    | Int(i) -> il.Emit(OpCodes.Ldc_I4, i)
-                vars
-    | Ref(name) -> 
+    | TString(s) -> il.Emit(OpCodes.Ldstr,s)
+                    vars
+    | TInt(i) -> il.Emit(OpCodes.Ldc_I4, i)
+                 vars
+    | TRef(name) -> 
         il.Emit(OpCodes.Ldloc, vars.[name])
         vars
-    | Var(typeName, name, expr) -> 
+    | TVar(typeName, name, expr) -> 
         let local = il.DeclareLocal(typeof<string>)
         local.SetLocalSymInfo(name)
         match expr with 
@@ -35,7 +34,7 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (usings:string lis
                         il.Emit(OpCodes.Stloc, local)
                         vars.Add(name, local)
         | _ -> vars
-    | Add(expr, expr') -> 
+    | TAdd(expr, expr') -> 
         let vars = eval il vars usings expr
         let vars = eval il vars usings expr'
         il.Emit(OpCodes.Add)
@@ -50,7 +49,7 @@ let compileInterface (tb:TypeBuilder) body usings=
                              | None ->  tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual))
     tb
 
-let compileMethod (mb:MethodBuilder) (exprList:Expr list) usings = 
+let compileMethod (mb:MethodBuilder) (exprList:TExpr list) usings = 
     let il = mb.GetILGenerator()
     usings|>List.iter (fun using -> il.UsingNamespace using)
     
