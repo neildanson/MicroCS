@@ -13,7 +13,7 @@ open Parser
 
 let cSharpProgram = """
 using System; 
-using System.Net;
+using System.Diagnostics;
 namespace TestNamespace
 {
     public interface TestInterface
@@ -26,8 +26,8 @@ namespace TestNamespace
         void DoSomething()
         {
             string xxx = "foo" + "bar";
-            System.Console.WriteLine(xxx);
-            System.Console.WriteLine(xxx);
+            Console.WriteLine(xxx);
+            Debug.WriteLine(xxx);
         }
     }
 
