@@ -100,7 +100,6 @@ Expr:
 	| NAME NAME EQUALS Expr SEMICOLON	{ Var ($1, $2, Some($4)) }
 	| NAME NAME	SEMICOLON				{ Var ($1, $2, None) }
 	| Expr ADD Expr						{ Add($1, $3) }
-	| COMMENT ANYTHING					{ Ignore }
 
 EnumBodyList:
 	|							{ [] }

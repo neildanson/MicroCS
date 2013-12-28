@@ -52,12 +52,6 @@ namespace TestNamespace
             return x;
         }
 
-        //This is not yet supported, other than to show that comments work OK
-        //string TestStringAddition2(string s1, string s2, string s3)
-        //{
-        //    return s1+s1+s3;
-        //}
-
         int TestIntAddition()
         {
             return 14 + 3;

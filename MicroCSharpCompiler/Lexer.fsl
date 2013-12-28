@@ -47,7 +47,6 @@ rule tokenize = parse
 | ['-']?digit+									{ INT (Int32.Parse(lexeme lexbuf)) }
 | ['-']?digit+('.'digit+)?(['e''E']digit+)?		{ FLOAT (Single.Parse(lexeme lexbuf)) }
 | name+											{ NAME (lexeme lexbuf) }
-| anything+										{ ANYTHING(lexeme lexbuf) }
 
 
 // EOF

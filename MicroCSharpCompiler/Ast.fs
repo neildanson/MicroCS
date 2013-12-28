@@ -37,7 +37,6 @@ and Expr =
 | Constructor of TypeName * Expr list
 | Add of Expr * Expr
 | Return of Expr
-| Ignore
 
 module AstHelpers = 
     let toAccessModifier = function
