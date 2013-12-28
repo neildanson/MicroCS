@@ -25,11 +25,13 @@ namespace TestNamespace
 
     class TestClass
     {
-        void DoSomething()
+        object DoSomething()
         {
             string xxx = "foo" + "bar";
+            object o = new object();
             Console.WriteLine(xxx);
             Debug.WriteLine(xxx);
+            return o;
         }
     }
 

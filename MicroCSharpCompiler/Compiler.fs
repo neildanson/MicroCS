@@ -11,6 +11,9 @@ open TypedAst
 //EnumBuilder and TypeBuilder both need to CreateType, but method defined seperately
 
 let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (usings:string list) = function
+    | TConstructor(t, parameters) ->
+        il.Emit(OpCodes.Newobj, t.GetConstructor([||])) //Todo get params from Parameter Expressions
+        vars
     | TCall(name, parameters) -> 
         let vars = parameters|>List.fold(fun v p -> eval il v usings p) vars 
         let className = name.Substring(0,name.LastIndexOf("."))
@@ -26,8 +29,8 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (usings:string lis
     | TRef(name) -> 
         il.Emit(OpCodes.Ldloc, vars.[name])
         vars
-    | TVar(typeName, name, expr) -> 
-        let local = il.DeclareLocal(typeof<string>)
+    | TVar(t, name, expr) -> 
+        let local = il.DeclareLocal(t)
         local.SetLocalSymInfo(name)
         match expr with 
         | Some(expr) -> let vars = eval il vars usings expr
@@ -38,7 +41,11 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (usings:string lis
         let vars = eval il vars usings expr
         let vars = eval il vars usings expr'
         il.Emit(OpCodes.Add)
-        vars 
+        vars
+    | TReturn(expr) ->
+        let vars = eval il vars usings expr
+        il.Emit(OpCodes.Ret)
+        vars  
     | _ -> failwith "Currently unsupported"
 
 let compileInterface (tb:TypeBuilder) body usings= 

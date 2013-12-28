@@ -27,7 +27,9 @@ and TExpr =
 | TBool of bool
 //End
 | TCall of Name * TExpr list //Name should be MethodInfo
+| TConstructor of Type * TExpr list 
 | TAdd of TExpr * TExpr
+| TReturn of TExpr
 
 let accessModifierToTypeAttribute = function
 | Public -> TypeAttributes.Public
@@ -90,7 +92,14 @@ let rec toTypedExpr usings = function
      | Call(name, parameters) -> 
         //TODO Should determine here if this is a static or an instance call
         TCall(name, parameters |> List.map(fun p -> toTypedExpr usings p)) 
+     | Constructor(typeName, parameters) -> 
+        let t = resolveType typeName usings
+        match t with
+        | Some(t) -> TConstructor(t,  parameters |> List.map(fun p -> toTypedExpr usings p)) 
+        | None -> failwith "void not a valid type for a variable" 
+        
      | Add(expr, expr') -> TAdd(toTypedExpr usings expr, toTypedExpr usings expr') 
+     | Return(expr) -> TReturn(toTypedExpr usings expr)
 
 let (|CLASSMETHOD|_|) (b, usings) = 
     match b with

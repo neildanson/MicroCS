@@ -14,7 +14,7 @@ open Ast
 //Keywords
 %token USING
 %token NAMESPACE
-%token CLASS INTERFACE STRUCT ENUM
+%token CLASS INTERFACE STRUCT ENUM NEW RETURN
 %token <System.Int32> INT 
 %token <System.Single> FLOAT
 %token <System.Double> DOUBLE
@@ -25,7 +25,7 @@ open Ast
 %token NULL
 
 //Language noise
-%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD
+%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD 
 
 %token EOF
 
@@ -88,12 +88,14 @@ ExprList:
 	| Expr ExprList		{ $1 :: $2 }
 
 Expr:
+	| NEW NAME LPAREN ParameterExprList RPAREN { Constructor($2, $4) }
 	| NAME LPAREN ParameterExprList RPAREN SEMICOLON	{ Call($1, $3) }
 	| QUOTE NAME QUOTE					{ String($2) }
 	| INT								{ Int($1) }
 	| FLOAT								{ Float($1) }
 	| BOOL								{ Bool($1) }
 	| NAME								{ Ref($1) }
+	| RETURN Expr SEMICOLON				{ Return($2) }
 	| NAME NAME EQUALS Expr SEMICOLON	{ Var ($1, $2, Some($4)) }
 	| NAME NAME	SEMICOLON				{ Var ($1, $2, None) }
 	| Expr ADD Expr						{ Add($1, $3) }
