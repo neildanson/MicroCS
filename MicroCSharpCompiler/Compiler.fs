@@ -26,6 +26,9 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (usings:string lis
                     vars
     | TInt(i) -> il.Emit(OpCodes.Ldc_I4, i)
                  vars
+    | TBool(b) -> 
+        il.Emit(OpCodes.Ldc_I4, if b then 1 else 0)
+        vars
     | TRef(name) -> 
         il.Emit(OpCodes.Ldloc, vars.[name])
         vars
@@ -56,7 +59,7 @@ let compileInterface (tb:TypeBuilder) body usings=
                              | None ->  tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual))
     tb
 
-let compileMethod (mb:MethodBuilder) (exprList:TExpr list) usings = 
+let compileMethod parameters (mb:MethodBuilder) (exprList:TExpr list) usings = 
     let il = mb.GetILGenerator()
     usings|>List.iter (fun using -> il.UsingNamespace using)
     
@@ -65,7 +68,7 @@ let compileMethod (mb:MethodBuilder) (exprList:TExpr list) usings =
 
 let compileClass (tb:TypeBuilder) body usings= 
     body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) -> ignore <|
-                        compileMethod
+                        compileMethod parameters
                             (match returnType with
                              | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 
                                                                    parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 

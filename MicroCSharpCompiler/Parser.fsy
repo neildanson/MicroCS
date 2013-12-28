@@ -18,14 +18,15 @@ open Ast
 %token <System.Int32> INT 
 %token <System.Single> FLOAT
 %token <System.Double> DOUBLE
-%token <System.Boolean> BOOL STRING
-%token <string> ACCESSMODIFIER
+%token <System.Boolean> BOOL 
+%token <string> ACCESSMODIFIER STRING
+%token <string> ANYTHING
 
 //Language Wrongness
 %token NULL
 
 //Language noise
-%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD 
+%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD COMMENT
 
 %token EOF
 
@@ -99,6 +100,7 @@ Expr:
 	| NAME NAME EQUALS Expr SEMICOLON	{ Var ($1, $2, Some($4)) }
 	| NAME NAME	SEMICOLON				{ Var ($1, $2, None) }
 	| Expr ADD Expr						{ Add($1, $3) }
+	| COMMENT ANYTHING					{ Ignore }
 
 EnumBodyList:
 	|							{ [] }

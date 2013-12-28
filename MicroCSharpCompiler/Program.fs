@@ -25,13 +25,56 @@ namespace TestNamespace
 
     class TestClass
     {
-        object DoSomething()
+        object TestReturningNewObject1()
+        {
+            object o = new object();
+            return o;
+        }
+
+        object TestReturningNewObject2()
+        {
+            return new object();
+        }
+
+        bool TestReturningTrue()
+        {
+            return true;
+        }
+
+        bool TestReturingFalse()
+        {
+            return false;
+        }
+
+        string TestStringAddition()
+        {
+            string x = "foo" + "bar";
+            return x;
+        }
+
+        //This is not yet supported, other than to show that comments work OK
+        //string TestStringAddition2(string s1, string s2, string s3)
+        //{
+        //    return s1+s1+s3;
+        //}
+
+        int TestIntAddition()
+        {
+            return 14 + 3;
+        }
+
+        void TestStaticCall()
+        {
+            Debug.WriteLine("xxx");
+        }
+
+        bool DoSomething2()
         {
             string xxx = "foo" + "bar";
-            object o = new object();
+            bool b = true;
             Console.WriteLine(xxx);
             Debug.WriteLine(xxx);
-            return o;
+            return b;
         }
     }
 
@@ -43,6 +86,8 @@ namespace TestNamespace
 """
 let parse input = LexBuffer<char>.FromString(input) 
 
+// This should read something like...
+// code |> parse |> typed |> compile |> save
 let Compile() =
     let xmlAssembly = Assembly.LoadWithPartialName "System.Xml"
     let tokenized = parse cSharpProgram
