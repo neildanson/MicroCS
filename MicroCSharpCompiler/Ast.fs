@@ -26,6 +26,7 @@ and InterfaceBody =
 and Parameter = 
 | Parameter of TypeName * Name
 and Expr =
+| Expr of Expr
 | Var of TypeName * Name * Expr option
 | Ref of Name
 | String of string

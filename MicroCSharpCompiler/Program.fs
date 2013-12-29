@@ -62,6 +62,12 @@ namespace TestNamespace
             Debug.WriteLine("xxx");
         }
 
+        void TestInferMethodReturnType()
+        {
+            string s = Convert.ToString(47);
+            Debug.WriteLine(s);
+        }
+
         bool DoSomething2()
         {
             string xxx = "foo" + "bar";

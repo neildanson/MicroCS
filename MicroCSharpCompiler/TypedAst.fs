@@ -52,7 +52,7 @@ let rec getType = function
 | TFloat(_) -> Some(typeof<float32>)
 | TDouble(_) -> Some(typeof<float>)
 | TBool(_) -> Some(typeof<bool>)
-| TCall(mi,_) -> Some(mi.ReturnType) //What is ReturnType for void?
+| TCall(mi,_) -> if mi.ReturnType = typeof<Void> then None else Some(mi.ReturnType) //What is ReturnType for void?
 | TConstructor(t,_) -> Some(t)
 | TAdd(e,e') -> getType e //for now assume that you can only add type x to type x
 | TReturn(e) -> getType e
@@ -93,6 +93,7 @@ let resolveType name usings =
         else failwith "Unrecognized type"
 
 let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
+     | Expr(expr) -> toTypedExpr usings variables expr
      | Var(typeName, name, expr) -> 
         let t = resolveType typeName usings
         match t with
