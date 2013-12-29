@@ -6,7 +6,7 @@ open System.Reflection
 open System.Reflection.Emit
 
 type TFile = 
-| TFile of string list * TNamespaceBody list
+| TFile of TNamespaceBody list
 and TNamespaceBody = 
 | TInterface of TypeBuilder * TInterfaceBody list
 | TClass of TypeBuilder * TClassBody list
@@ -26,7 +26,8 @@ and TExpr =
 | TDouble of float
 | TBool of bool
 //End
-| TCall of Name * TExpr list //Name should be MethodInfo
+| TStaticCall of Name * TExpr list
+| TCall of MethodInfo * TExpr list //Name should be MethodInfo
 | TConstructor of Type * TExpr list 
 | TAdd of TExpr * TExpr
 | TReturn of TExpr
@@ -91,7 +92,11 @@ let rec toTypedExpr usings = function
      | Bool(b) -> TBool(b)
      | Call(name, parameters) -> 
         //TODO Should determine here if this is a static or an instance call
-        TCall(name, parameters |> List.map(fun p -> toTypedExpr usings p)) 
+        let className = name.Substring(0,name.LastIndexOf("."))
+        let methodName = name.Substring(name.LastIndexOf(".") + 1 )
+        let typeOf = getTypeByName className usings
+        let mi = typeOf.GetMethod(methodName, [|typeof<string>|])
+        TCall(mi, parameters |> List.map(fun p -> toTypedExpr usings p)) 
      | Constructor(typeName, parameters) -> 
         let t = resolveType typeName usings
         match t with
@@ -157,7 +162,6 @@ let preCompile (ast: File) filename =
     | File fileBody -> 
         let usings = fileBody |> List.choose(fun x -> match x with Using(using) -> Some(using) | _ -> None)
         let namespaces = fileBody |> List.choose(fun x -> match x with Namespace(name, bodyList) -> Some(name, bodyList) | _ -> None)
-        ab, TFile(usings, 
-                    namespaces
-                    |>List.collect(fun (name, body) -> body|>List.choose(fun b -> compileType mb b name usings)))
+        ab, TFile(namespaces
+                  |>List.collect(fun (name, body) -> body|>List.choose(fun b -> compileType mb b name usings)))
         
