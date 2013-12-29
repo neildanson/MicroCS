@@ -26,7 +26,7 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
     | TBool(b) -> 
         il.Emit(OpCodes.Ldc_I4, if b then 1 else 0)
         vars
-    | TRef(name) -> 
+    | TRef(_,name) -> 
         il.Emit(OpCodes.Ldloc, vars.[name])
         vars
     | TVar(t, name, expr) -> 

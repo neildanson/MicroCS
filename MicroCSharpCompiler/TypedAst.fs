@@ -2,6 +2,7 @@
 
 open Ast
 open System
+open System.Collections.Generic
 open System.Reflection
 open System.Reflection.Emit
 
@@ -18,8 +19,8 @@ and TClassBody =
 | TMethod of AccessModifier * Type option * Name * (Type * Name) list * TExpr list 
 and TExpr = 
 | TVar of Type * Name * TExpr option
+| TRef of Type * Name
 //Are the following needed?
-| TRef of Name
 | TString of string
 | TInt of int
 | TFloat of float32
@@ -43,6 +44,19 @@ let accessModifierToMethodAttribute = function
 | Private -> MethodAttributes.Private
 | Internal -> MethodAttributes.Assembly
 | Protected -> MethodAttributes.Family
+
+let rec getType = function
+| TVar(t,_,_) -> Some(t)
+| TString(_) -> Some(typeof<string>)
+| TInt(_) -> Some(typeof<int>)
+| TFloat(_) -> Some(typeof<float32>)
+| TDouble(_) -> Some(typeof<float>)
+| TBool(_) -> Some(typeof<bool>)
+| TCall(mi,_) -> Some(mi.ReturnType) //What is ReturnType for void?
+| TConstructor(t,_) -> Some(t)
+| TAdd(e,e') -> getType e //for now assume that you can only add type x to type x
+| TReturn(e) -> getType e
+| TRef(t, _) -> Some(t)
 
 //TODO - Lookup locally defined types
 let getTypeByName name usings = 
@@ -78,13 +92,15 @@ let resolveType name usings =
         if t <> null then Some(t) 
         else failwith "Unrecognized type"
 
-let rec toTypedExpr usings = function
+let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
      | Var(typeName, name, expr) -> 
         let t = resolveType typeName usings
         match t with
-        | Some(t) -> TVar(t, name, expr|>Option.map(fun e -> toTypedExpr usings e))
+        | Some(t) -> 
+            variables.Add(name, t)
+            TVar(t, name, expr|>Option.map(fun e -> toTypedExpr usings variables e))
         | None -> failwith "void not a valid type for a variable" 
-     | Ref(name) -> TRef(name)
+     | Ref(name) -> TRef(variables.[name], name)
      | String(s) -> TString(s)
      | Int(i) -> TInt(i)
      | Float(f) -> TFloat(f)
@@ -95,23 +111,26 @@ let rec toTypedExpr usings = function
         let className = name.Substring(0,name.LastIndexOf("."))
         let methodName = name.Substring(name.LastIndexOf(".") + 1 )
         let typeOf = getTypeByName className usings
-        let mi = typeOf.GetMethod(methodName, [|typeof<string>|])
-        TCall(mi, parameters |> List.map(fun p -> toTypedExpr usings p)) 
+        let parameters = parameters |> List.map(fun p -> toTypedExpr usings variables p)
+        let mi = typeOf.GetMethod(methodName, parameters|>List.map(getType)|> List.choose id |> List.toArray)
+        TCall(mi, parameters) 
      | Constructor(typeName, parameters) -> 
         let t = resolveType typeName usings
         match t with
-        | Some(t) -> TConstructor(t,  parameters |> List.map(fun p -> toTypedExpr usings p)) 
+        | Some(t) -> TConstructor(t,  parameters |> List.map(fun p -> toTypedExpr usings variables p)) 
         | None -> failwith "void not a valid type for a variable" 
         
-     | Add(expr, expr') -> TAdd(toTypedExpr usings expr, toTypedExpr usings expr') 
-     | Return(expr) -> TReturn(toTypedExpr usings expr)
+     | Add(expr, expr') -> TAdd(toTypedExpr usings variables expr, toTypedExpr usings variables expr') 
+     | Return(expr) -> TReturn(toTypedExpr usings variables expr)
 
 let (|CLASSMETHOD|_|) (b, usings) = 
     match b with
     | ClassBody.Method(acccessModifier, typename, name, parameters, exprList) -> 
         let returnType = resolveType typename usings
-        let parameters = parameters |> List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
-        Some(TClassBody.TMethod(acccessModifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings e)))
+        let parameters = parameters |> List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //TODO - dont use .Value
+        //MUTABLE STATE!!!
+        let variables = Dictionary<_,_>()
+        Some(TClassBody.TMethod(acccessModifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings variables e)))
     | _ -> None
 
 let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
