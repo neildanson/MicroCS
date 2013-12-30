@@ -15,6 +15,7 @@ open Parser
 
 let cSharpProgram = """
 using System; 
+using System.Net;
 using System.Diagnostics;
 namespace TestNamespace
 {
@@ -62,6 +63,21 @@ namespace TestNamespace
             Debug.WriteLine("xxx");
         }
 
+        string TestInstanceCall()
+        {
+            string s = "Hello";
+            return s.ToLower();
+        }
+
+        string TestComplexCalls()
+        {
+            WebClient wc = new WebClient();
+            
+            string result =  wc.DownloadString("http://www.google.com");
+            return result;
+        }
+
+
         void TestInferMethodReturnType()
         {
             string s = Convert.ToString(47);
@@ -84,22 +100,26 @@ namespace TestNamespace
     }
 }
 """
-let parse input = LexBuffer<char>.FromString(input) 
+let parse input = 
+    let tokenized = LexBuffer<char>.FromString(input) 
+    Parser.start Lexer.tokenize tokenized            
 
-// This should read something like...
-// code |> parse |> typed |> compile |> save
+let save name (ass: Emit.AssemblyBuilder) = ass.Save(name)
+
+let references refs = refs |> List.iter(fun s -> Assembly.LoadWithPartialName s |> ignore)
+
 let Compile() =
-    let xmlAssembly = Assembly.LoadWithPartialName "System.Xml"
-    let tokenized = parse cSharpProgram
     let sw = Stopwatch()
     sw.Restart()
-    printfn "Parsing..."
-    let ast = Parser.start Lexer.tokenize tokenized
-    printfn "Compiling..."
-    let ab, pcAst = preCompile ast "CSharpCompilerExample"
-    compile pcAst
+
+    references [ "System.Xml"] 
+    cSharpProgram 
+    |> parse 
+    |> typed "CSharpCompilerExample"
+    |> compile
+    |> save "CSharpCompilerExample.dll"
+    
     printf "Time to Compile %dms" sw.ElapsedMilliseconds
-    ab.Save("CSharpCompilerExample.dll")
     Console.ReadLine() |> ignore
 
 IO.File.Delete("CSharpCompilerExample.dll")

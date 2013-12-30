@@ -9,7 +9,7 @@ let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
 
 // These are some regular expression definitions
 let name = ['a'-'z' 'A'-'Z' '0'-'9' '.']
-let anything = [ 'a'-'z' 'A'-'Z' '0'-'9' '.' '{' '}' '(' ')' ',' ';' '+' ' '] //TODO - better way to defin what can be in a comment!!
+
 let digit = ['0'-'9']
 let whitespace = [' ' '\t' ]
 let newline = ('\n' | '\r' '\n')
@@ -47,7 +47,7 @@ rule tokenize = parse
 | ['-']?digit+									{ INT (Int32.Parse(lexeme lexbuf)) }
 | ['-']?digit+('.'digit+)?(['e''E']digit+)?		{ FLOAT (Single.Parse(lexeme lexbuf)) }
 | name+											{ NAME (lexeme lexbuf) }
-
+|'\"' [^ '\"']+ '\"'						    { STRING (let s = lexeme lexbuf in s.Substring(1, s.Length - 2)) }
 
 // EOF
 | eof   { EOF }

@@ -14,9 +14,13 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
     | TConstructor(t, parameters) ->
         il.Emit(OpCodes.Newobj, t.GetConstructor([||])) //Todo get params from Parameter Expressions
         vars
-    | TCall(methodInfo, parameters) -> 
+    | TInstanceCall(expr, methodInfo, parameters) ->
+        let vars = eval il vars expr
         let vars = parameters|>List.fold(fun v p -> eval il v p) vars 
-        
+        il.EmitCall(OpCodes.Call, methodInfo, null)  
+        vars
+    | TStaticCall(methodInfo, parameters) -> 
+        let vars = parameters|>List.fold(fun v p -> eval il v p) vars 
         il.EmitCall(OpCodes.Call, methodInfo, null)  
         vars
     | TString(s) -> il.Emit(OpCodes.Ldstr,s)
@@ -82,6 +86,7 @@ let compileFile(TFile(body)) =
     |>List.choose(fun b -> compileType b)
     |>List.iter(fun tb -> tb.CreateType() |> ignore)
 
-let compile (ast: TFile) = 
+let compile (ab, ast: TFile) = 
     compileFile ast
+    ab
 

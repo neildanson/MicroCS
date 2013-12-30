@@ -27,8 +27,8 @@ and TExpr =
 | TDouble of float
 | TBool of bool
 //End
-| TStaticCall of Name * TExpr list
-| TCall of MethodInfo * TExpr list //Name should be MethodInfo
+| TInstanceCall of TExpr * MethodInfo * TExpr list
+| TStaticCall of MethodInfo * TExpr list
 | TConstructor of Type * TExpr list 
 | TAdd of TExpr * TExpr
 | TReturn of TExpr
@@ -52,7 +52,8 @@ let rec getType = function
 | TFloat(_) -> Some(typeof<float32>)
 | TDouble(_) -> Some(typeof<float>)
 | TBool(_) -> Some(typeof<bool>)
-| TCall(mi,_) -> if mi.ReturnType = typeof<Void> then None else Some(mi.ReturnType) //What is ReturnType for void?
+| TInstanceCall(_,mi,_)
+| TStaticCall(mi,_) -> if mi.ReturnType = typeof<Void> then None else Some(mi.ReturnType)
 | TConstructor(t,_) -> Some(t)
 | TAdd(e,e') -> getType e //for now assume that you can only add type x to type x
 | TReturn(e) -> getType e
@@ -108,13 +109,29 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
      | Double(d) -> TDouble(d)
      | Bool(b) -> TBool(b)
      | Call(name, parameters) -> 
-        //TODO Should determine here if this is a static or an instance call
-        let className = name.Substring(0,name.LastIndexOf("."))
-        let methodName = name.Substring(name.LastIndexOf(".") + 1 )
-        let typeOf = getTypeByName className usings
-        let parameters = parameters |> List.map(fun p -> toTypedExpr usings variables p)
-        let mi = typeOf.GetMethod(methodName, parameters|>List.map(getType)|> List.choose id |> List.toArray)
-        TCall(mi, parameters) 
+        //If theres a . then its either an instance call or a static call
+        let firstDot = name.IndexOf('.')
+        if firstDot <> -1 then
+            //See if the 
+            let beforeDot = name.Substring(0, firstDot)
+            let var = match variables.TryGetValue beforeDot with
+                      | true, t -> 
+                            let methodName = name.Substring(name.LastIndexOf(".") + 1 )
+                            let parameters = parameters |> List.map(fun p -> toTypedExpr usings variables p)
+                            let mi = t.GetMethod(methodName, parameters|>List.map(getType)|> List.choose id |> List.toArray)
+                            //Now its not entirely true that this will always be a ref.....
+                            TInstanceCall(TRef(t, beforeDot), mi, parameters)
+
+                      | _ ->                     
+                            let className = name.Substring(0,name.LastIndexOf("."))
+                            let methodName = name.Substring(name.LastIndexOf(".") + 1 )
+                            let typeOf = getTypeByName className usings
+                            let parameters = parameters |> List.map(fun p -> toTypedExpr usings variables p)
+                            let mi = typeOf.GetMethod(methodName, parameters|>List.map(getType)|> List.choose id |> List.toArray)
+                            TStaticCall(mi, parameters) 
+            var
+        else
+            failwith "'this' methods not supported yet"
      | Constructor(typeName, parameters) -> 
         let t = resolveType typeName usings
         match t with
@@ -174,7 +191,7 @@ let compileType mb namespaceBody namespaceName usings =
     | ENUM(tb) -> Some(TEnum(tb))
     | _ -> failwith "Unrecognized Namespace Body"
 
-let preCompile (ast: File) filename = 
+let typed  filename (ast: File) = 
     let aName = AssemblyName(filename)
     let ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.RunAndSave)
     let mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll", true) //true means debug it seems

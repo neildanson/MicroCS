@@ -92,15 +92,16 @@ Expr:
 	| Expr SEMICOLON					{ Expr($1) }
 	| NEW NAME LPAREN ParameterExprList RPAREN { Constructor($2, $4) }
 	| NAME LPAREN ParameterExprList RPAREN 	{ Call($1, $3) }
-	| QUOTE NAME QUOTE					{ String($2) }
 	| INT								{ Int($1) }
 	| FLOAT								{ Float($1) }
 	| BOOL								{ Bool($1) }
-	| NAME								{ Ref($1) }
+	
 	| RETURN Expr						{ Return($2) }
 	| NAME NAME EQUALS Expr				{ Var ($1, $2, Some($4)) }
 	| NAME NAME							{ Var ($1, $2, None) }
 	| Expr ADD Expr						{ Add($1, $3) }
+	| STRING							{ String($1) }
+	| NAME								{ Ref($1) }
 
 EnumBodyList:
 	|							{ [] }
