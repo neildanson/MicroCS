@@ -18,6 +18,7 @@ and TInterfaceBody =
 and TClassBody = 
 | TMethod of AccessModifier * Type option * Name * (Type * Name) list * TExpr list 
 and TExpr = 
+| TScope of TExpr list
 | TVar of Type * Name * TExpr option
 | TRef of Type * Name
 //Are the following needed?
@@ -32,6 +33,7 @@ and TExpr =
 | TConstructor of Type * TExpr list 
 | TAdd of TExpr * TExpr
 | TEquals of TExpr * TExpr
+| TIf of TExpr * TExpr
 | TReturn of TExpr
 
 let accessModifierToTypeAttribute = function
@@ -60,6 +62,8 @@ let rec getType = function
 | TEquals(e, e') -> Some(typeof<bool>)
 | TReturn(e) -> getType e
 | TRef(t, _) -> Some(t)
+| TScope(_) -> None
+| TIf(_, ifTrue) -> getType ifTrue //Note return types from if must match from both sides
 
 //TODO - Lookup locally defined types
 let getTypeByName name usings = 
@@ -143,6 +147,8 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
      | Add(expr, expr') -> TAdd(toTypedExpr usings variables expr, toTypedExpr usings variables expr') 
      | Equals(expr, expr') -> TEquals(toTypedExpr usings variables expr, toTypedExpr usings variables expr') 
      | Return(expr) -> TReturn(toTypedExpr usings variables expr)
+     | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTypedExpr usings variables expr))
+     | If(cond, ifTrue) -> TIf(toTypedExpr usings variables cond, toTypedExpr usings variables ifTrue)
 
 let (|CLASSMETHOD|_|) (b, usings) = 
     match b with

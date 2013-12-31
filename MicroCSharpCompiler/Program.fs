@@ -97,6 +97,25 @@ namespace TestNamespace
         {
             return 1 == 2;
         }
+
+        void TestScoping()
+        {
+            int i = 0;
+            {
+                int j = 1;
+                Console.WriteLine(j.ToString());
+            }
+            Console.WriteLine(i.ToString());
+        }
+
+        bool TestIf()
+        {
+            Random r = new Random();
+            int next = r.Next();
+            if (next == 4) return true;
+            return false;
+        }
+
     }
 
     internal enum TestEnum 
@@ -117,7 +136,8 @@ let Compile() =
     let sw = Stopwatch()
     sw.Restart()
 
-    references [ "System.Xml"] 
+    //Perhaps a new appdomain is in order?
+    references [ "System.Xml"; "System.Core"] 
     cSharpProgram 
     |> parse 
     |> typed "CSharpCompilerExample"

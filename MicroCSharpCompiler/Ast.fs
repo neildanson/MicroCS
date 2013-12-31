@@ -27,6 +27,7 @@ and Parameter =
 | Parameter of TypeName * Name
 and Expr =
 | Expr of Expr
+| Scope of Expr list
 | Var of TypeName * Name * Expr option
 | Ref of Name
 | String of string
@@ -38,11 +39,13 @@ and Expr =
 | Constructor of TypeName * Expr list
 | Add of Expr * Expr
 | Equals of Expr * Expr
+| If of Expr * Expr
 | Return of Expr
 
 module AstHelpers = 
     let toAccessModifier = function
     | "public" -> Public
+    | ""
     | "private" -> Private
     | "internal" -> Internal
     | "protected" -> Protected

@@ -55,6 +55,26 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
         let vars = eval il vars expr
         il.Emit(OpCodes.Ret)
         vars  
+    | TScope(exprs) -> 
+        il.BeginScope()
+        let vars = exprs|>List.fold(fun v p -> eval il v p) vars 
+        il.EndScope()
+        vars
+    | TIf(cond, ifTrue) -> 
+        //TODO
+        let label = il.DefineLabel()
+        let ifLocal = il.DeclareLocal(typeof<bool>)
+        let vars = eval il vars cond
+        il.Emit(OpCodes.Stloc, ifLocal)
+        il.Emit(OpCodes.Ldloc, ifLocal)
+        
+        
+        il.Emit(OpCodes.Brfalse, label)
+        
+        let vars = eval il vars ifTrue
+        il.MarkLabel(label)
+         
+        vars
     | _ -> failwith "Currently unsupported"
 
 let compileInterface (tb:TypeBuilder) body = 
