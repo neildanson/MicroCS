@@ -92,6 +92,11 @@ namespace TestNamespace
             Debug.WriteLine(xxx);
             return b;
         }
+
+        bool TestEquality()
+        {
+            return 1 == 2;
+        }
     }
 
     internal enum TestEnum 

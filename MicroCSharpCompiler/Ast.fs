@@ -37,6 +37,7 @@ and Expr =
 | Call of Name * Expr list
 | Constructor of TypeName * Expr list
 | Add of Expr * Expr
+| Equals of Expr * Expr
 | Return of Expr
 
 module AstHelpers = 

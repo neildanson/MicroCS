@@ -31,6 +31,7 @@ and TExpr =
 | TStaticCall of MethodInfo * TExpr list
 | TConstructor of Type * TExpr list 
 | TAdd of TExpr * TExpr
+| TEquals of TExpr * TExpr
 | TReturn of TExpr
 
 let accessModifierToTypeAttribute = function
@@ -56,6 +57,7 @@ let rec getType = function
 | TStaticCall(mi,_) -> if mi.ReturnType = typeof<Void> then None else Some(mi.ReturnType)
 | TConstructor(t,_) -> Some(t)
 | TAdd(e,e') -> getType e //for now assume that you can only add type x to type x
+| TEquals(e, e') -> Some(typeof<bool>)
 | TReturn(e) -> getType e
 | TRef(t, _) -> Some(t)
 
@@ -139,6 +141,7 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
         | None -> failwith "void not a valid type for a variable" 
         
      | Add(expr, expr') -> TAdd(toTypedExpr usings variables expr, toTypedExpr usings variables expr') 
+     | Equals(expr, expr') -> TEquals(toTypedExpr usings variables expr, toTypedExpr usings variables expr') 
      | Return(expr) -> TReturn(toTypedExpr usings variables expr)
 
 let (|CLASSMETHOD|_|) (b, usings) = 

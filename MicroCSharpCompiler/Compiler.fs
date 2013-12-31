@@ -46,6 +46,11 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
         let vars = eval il vars expr'
         il.Emit(OpCodes.Add)
         vars
+    | TEquals(expr, expr') -> 
+        let vars = eval il vars expr
+        let vars = eval il vars expr'
+        il.Emit(OpCodes.Ceq)
+        vars
     | TReturn(expr) ->
         let vars = eval il vars expr
         il.Emit(OpCodes.Ret)
