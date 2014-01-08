@@ -63,6 +63,7 @@
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
+    <Compile Include="CSharpSource.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

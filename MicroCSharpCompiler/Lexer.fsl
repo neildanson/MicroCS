@@ -17,7 +17,7 @@ let accessmodifier = ("public"|"private"|"internal"|"protected")
 
 rule tokenize = parse
 | whitespace	{ tokenize lexbuf }
-| newline       { tokenize lexbuf }
+| newline       { lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf }
 //Keywords
 | "using"		{ USING }
 | "namespace"	{ NAMESPACE  }
@@ -43,6 +43,8 @@ rule tokenize = parse
 | "+"			{ ADD } 
 | "new"			{ NEW }
 | "return"		{ RETURN }
+| "while"		{ WHILE }
+| "do"			{ DO }
 | "//"			{ COMMENT }
 | "if"			{ IF }
 

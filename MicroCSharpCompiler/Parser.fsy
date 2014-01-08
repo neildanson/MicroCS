@@ -14,7 +14,7 @@ open Ast
 //Keywords
 %token USING
 %token NAMESPACE
-%token CLASS INTERFACE STRUCT ENUM NEW RETURN IF ELSE
+%token CLASS INTERFACE STRUCT ENUM NEW RETURN IF ELSE WHILE DO
 %token <System.Int32> INT 
 %token <System.Single> FLOAT
 %token <System.Double> DOUBLE
@@ -105,6 +105,8 @@ Expr:
 	| STRING							{ String($1) }
 	| NAME								{ Ref($1) }
 	| Expr EQUALS EQUALS Expr			{ Equals($1, $4) }
+	| DO Expr WHILE LPAREN Expr RPAREN 	{ DoWhile($2, $5) }
+	//| WHILE LPAREN Expr RPAREN Expr		{ While($3,$5) }
 
 EnumBodyList:
 	|							{ [] }

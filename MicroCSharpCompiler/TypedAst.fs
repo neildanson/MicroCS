@@ -34,6 +34,8 @@ and TExpr =
 | TAdd of TExpr * TExpr
 | TEquals of TExpr * TExpr
 | TIf of TExpr * TExpr
+| TWhile of TExpr * TExpr
+| TDoWhile of TExpr * TExpr 
 | TReturn of TExpr
 
 let accessModifierToTypeAttribute = function
@@ -63,6 +65,8 @@ let rec getType = function
 | TReturn(e) -> getType e
 | TRef(t, _) -> Some(t)
 | TScope(_) -> None
+| TWhile(_,_) -> None
+| TDoWhile(_,_) -> None
 | TIf(_, ifTrue) -> getType ifTrue //Note return types from if must match from both sides
 
 //TODO - Lookup locally defined types
@@ -149,6 +153,8 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
      | Return(expr) -> TReturn(toTypedExpr usings variables expr)
      | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTypedExpr usings variables expr))
      | If(cond, ifTrue) -> TIf(toTypedExpr usings variables cond, toTypedExpr usings variables ifTrue)
+     | While(cond, body) -> TWhile(toTypedExpr usings variables cond, toTypedExpr usings variables body)
+     | DoWhile(body, cond) -> TDoWhile(toTypedExpr usings variables body, toTypedExpr usings variables cond)
 
 let (|CLASSMETHOD|_|) (b, usings) = 
     match b with

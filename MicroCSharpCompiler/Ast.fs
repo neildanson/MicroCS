@@ -41,6 +41,8 @@ and Expr =
 | Equals of Expr * Expr
 | If of Expr * Expr
 | Return of Expr
+| While of Expr * Expr
+| DoWhile of Expr * Expr
 
 module AstHelpers = 
     let toAccessModifier = function

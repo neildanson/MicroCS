@@ -56,9 +56,9 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
         il.Emit(OpCodes.Ret)
         vars  
     | TScope(exprs) -> 
-        il.BeginScope()
+        //il.BeginScope()
         let vars = exprs|>List.fold(fun v p -> eval il v p) vars 
-        il.EndScope()
+        //il.EndScope()
         vars
     | TIf(cond, ifTrue) -> 
         //TODO
@@ -67,13 +67,43 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
         let vars = eval il vars cond
         il.Emit(OpCodes.Stloc, ifLocal)
         il.Emit(OpCodes.Ldloc, ifLocal)
-        
-        
+
         il.Emit(OpCodes.Brfalse, label)
         
         let vars = eval il vars ifTrue
         il.MarkLabel(label)
          
+        vars
+    | TWhile(cond, body) ->
+        //this is not correct
+        let startLabel = il.DefineLabel()
+        let endLabel = il.DefineLabel()
+        let ifLocal = il.DeclareLocal(typeof<bool>)
+        il.MarkLabel(startLabel)
+        let vars = eval il vars cond
+        il.Emit(OpCodes.Stloc, ifLocal)
+        il.Emit(OpCodes.Ldloc, ifLocal)
+        //If cond == false goto end       
+        il.Emit(OpCodes.Brfalse, endLabel)
+        //While body
+        let vars = eval il vars body
+        il.Emit(OpCodes.Ldc_I4_0)
+        il.Emit(OpCodes.Br_S, startLabel)
+        il.MarkLabel(endLabel)
+        vars
+    | TDoWhile(body,cond) ->
+        //this is not correct
+        let startLabel = il.DefineLabel()
+        let ifLocal = il.DeclareLocal(typeof<bool>)
+        il.MarkLabel(startLabel)
+        let vars = eval il vars body
+        
+        let vars = eval il vars cond
+        il.Emit(OpCodes.Stloc, ifLocal)
+        il.Emit(OpCodes.Ldloc, ifLocal)
+        //If cond == false goto end       
+        //While body
+        il.Emit(OpCodes.Brtrue, startLabel)
         vars
     | _ -> failwith "Currently unsupported"
 
