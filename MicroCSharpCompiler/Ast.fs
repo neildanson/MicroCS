@@ -28,7 +28,7 @@ and Parameter =
 and Expr =
 | Expr of Expr
 | Scope of Expr list
-| Var of TypeName * Name * Expr option
+| Var of TypeName * Name
 | Ref of Name
 | String of string
 | Int of int
@@ -43,7 +43,7 @@ and Expr =
 | Return of Expr
 | While of Expr * Expr
 | DoWhile of Expr * Expr
-
+| Assign of Expr * Expr
 module AstHelpers = 
     let toAccessModifier = function
     | "public" -> Public

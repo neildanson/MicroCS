@@ -19,7 +19,7 @@ and TClassBody =
 | TMethod of AccessModifier * Type option * Name * (Type * Name) list * TExpr list 
 and TExpr = 
 | TScope of TExpr list
-| TVar of Type * Name * TExpr option
+| TVar of Type * Name
 | TRef of Type * Name
 //Are the following needed?
 | TString of string
@@ -37,6 +37,7 @@ and TExpr =
 | TWhile of TExpr * TExpr
 | TDoWhile of TExpr * TExpr 
 | TReturn of TExpr
+| TAssign of TExpr * TExpr
 
 let accessModifierToTypeAttribute = function
 | Public -> TypeAttributes.Public
@@ -51,7 +52,7 @@ let accessModifierToMethodAttribute = function
 | Protected -> MethodAttributes.Family
 
 let rec getType = function
-| TVar(t,_,_) -> Some(t)
+| TVar(t,_) -> Some(t)
 | TString(_) -> Some(typeof<string>)
 | TInt(_) -> Some(typeof<int>)
 | TFloat(_) -> Some(typeof<float32>)
@@ -67,6 +68,7 @@ let rec getType = function
 | TScope(_) -> None
 | TWhile(_,_) -> None
 | TDoWhile(_,_) -> None
+| TAssign(_,_) -> None
 | TIf(_, ifTrue) -> getType ifTrue //Note return types from if must match from both sides
 
 //TODO - Lookup locally defined types
@@ -105,12 +107,12 @@ let resolveType name usings =
 
 let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
      | Expr(expr) -> toTypedExpr usings variables expr
-     | Var(typeName, name, expr) -> 
+     | Var(typeName, name) -> 
         let t = resolveType typeName usings
         match t with
         | Some(t) -> 
             variables.Add(name, t)
-            TVar(t, name, expr|>Option.map(fun e -> toTypedExpr usings variables e))
+            TVar(t, name)
         | None -> failwith "void not a valid type for a variable" 
      | Ref(name) -> TRef(variables.[name], name)
      | String(s) -> TString(s)
@@ -156,6 +158,8 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
      | If(cond, ifTrue) -> TIf(toTypedExpr usings variables cond, toTypedExpr usings variables ifTrue)
      | While(cond, body) -> TWhile(toTypedExpr usings variables cond, toTypedExpr usings variables body)
      | DoWhile(body, cond) -> TDoWhile(toTypedExpr usings variables body, toTypedExpr usings variables cond)
+     | Assign(expr, expr') -> 
+        TAssign(toTypedExpr usings variables expr, toTypedExpr usings variables expr')
 
 let (|CLASSMETHOD|_|) (b, usings) = 
     match b with

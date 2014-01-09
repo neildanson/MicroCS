@@ -38,14 +38,10 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
     | TRef(_,name) -> 
         il.Emit(OpCodes.Ldloc, vars.[name])
         vars
-    | TVar(t, name, expr) -> 
+    | TVar(t, name) -> 
         let local = il.DeclareLocal(t)
         local.SetLocalSymInfo(name)
-        match expr with 
-        | Some(expr) -> let vars = eval il vars expr
-                        il.Emit(OpCodes.Stloc, local)
-                        vars.Add(name, local)
-        | _ -> vars
+        vars|>Map.add name local
     | TAdd(s, s') when (getType s) = Some(typeof<string>) &&
                        (getType s') = Some(typeof<string>)  ->
          let vars = eval il vars s
@@ -113,6 +109,19 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
         //If cond == false goto end       
         //While body
         il.Emit(OpCodes.Brtrue, startLabel)
+        vars
+    | TAssign(TVar(type', name), rhs) -> 
+        //TODO
+        let vars = eval il vars (TVar(type',name))
+        let local = vars.[name]
+        let vars = eval il vars rhs
+        il.Emit(OpCodes.Stloc, local)        
+        vars
+    | TAssign(TRef(type', name), rhs) -> 
+        //TODO
+        let local = vars.[name]
+        let vars = eval il vars rhs
+        il.Emit(OpCodes.Stloc, local)        
         vars
     | _ -> failwith "Currently unsupported"
 
