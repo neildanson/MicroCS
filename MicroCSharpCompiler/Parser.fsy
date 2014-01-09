@@ -106,7 +106,7 @@ Expr:
 	| NAME								{ Ref($1) }
 	| Expr EQUALS EQUALS Expr			{ Equals($1, $4) }
 	| DO Expr WHILE LPAREN Expr RPAREN 	{ DoWhile($2, $5) }
-	//| WHILE LPAREN Expr RPAREN Expr		{ While($3,$5) }
+	| WHILE LPAREN Expr RPAREN Expr		{ While($3,$5) }
 
 EnumBodyList:
 	|							{ [] }

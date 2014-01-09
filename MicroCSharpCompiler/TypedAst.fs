@@ -137,6 +137,7 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) = function
                             let methodName = name.Substring(name.LastIndexOf(".") + 1 )
                             let typeOf = getTypeByName className usings
                             let parameters = parameters |> List.map(fun p -> toTypedExpr usings variables p)
+                            
                             let mi = typeOf.GetMethod(methodName, parameters|>List.map(getType)|> List.choose id |> List.toArray)
                             TStaticCall(mi, parameters) 
             var

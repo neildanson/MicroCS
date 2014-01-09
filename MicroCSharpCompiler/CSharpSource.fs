@@ -1,6 +1,7 @@
 ﻿module CSharpSource
 let cSharpProgram = """using System; 
 using System.Net;
+using System.Threading;
 using System.Diagnostics;
 namespace TestNamespace
 {
@@ -68,12 +69,24 @@ namespace TestNamespace
             Debug.WriteLine(s);
         }
 
+        public void TestWhile()
+        {
+            int i = 0;
+            while ( i == 0)
+            {
+                Console.WriteLine(i.ToString());
+            }
+        }
+
         public bool DoSomething2()
         {
             string xxx = "foo" + "bar";
+            int x = 1;
+            int y = 2;
+            string yyy = x.ToString() + y.ToString();
             bool b = true;
             Console.WriteLine(xxx);
-            Debug.WriteLine(xxx);
+            Debug.WriteLine(yyy);
             return b;
         }
 
@@ -84,9 +97,9 @@ namespace TestNamespace
 
         public void TestScoping()
         {
-            int i = 0;
+            int i = 48;
             {
-                int j = 1;
+                int j = 64;
                 Console.WriteLine(j.ToString());
             }
             Console.WriteLine(i.ToString());
@@ -105,6 +118,7 @@ namespace TestNamespace
             do
             {
                 Console.WriteLine("Foo");
+                Thread.Sleep(1000);
             }
             while (true);
         }

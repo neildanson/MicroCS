@@ -14,6 +14,11 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
     | TConstructor(t, parameters) ->
         il.Emit(OpCodes.Newobj, t.GetConstructor([||])) //Todo get params from Parameter Expressions
         vars
+    | TInstanceCall(TRef(_,name), methodInfo, parameters) when vars.[name].LocalType.IsValueType ->
+        il.Emit(OpCodes.Ldloca, vars.[name]) 
+        let vars = parameters|>List.fold(fun v p -> eval il v p) vars 
+        il.EmitCall(OpCodes.Call, methodInfo, null) 
+        vars
     | TInstanceCall(expr, methodInfo, parameters) ->
         let vars = eval il vars expr
         let vars = parameters|>List.fold(fun v p -> eval il v p) vars 
@@ -41,6 +46,12 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
                         il.Emit(OpCodes.Stloc, local)
                         vars.Add(name, local)
         | _ -> vars
+    | TAdd(s, s') when (getType s) = Some(typeof<string>) &&
+                       (getType s') = Some(typeof<string>)  ->
+         let vars = eval il vars s
+         let vars = eval il vars s'
+         il.Emit(OpCodes.Call, typeof<string>.GetMethod("Concat", [| typeof<string>; typeof<string> |]))
+         vars
     | TAdd(expr, expr') -> 
         let vars = eval il vars expr
         let vars = eval il vars expr'
@@ -56,9 +67,9 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
         il.Emit(OpCodes.Ret)
         vars  
     | TScope(exprs) -> 
-        //il.BeginScope()
+        il.BeginScope()
         let vars = exprs|>List.fold(fun v p -> eval il v p) vars 
-        //il.EndScope()
+        il.EndScope()
         vars
     | TIf(cond, ifTrue) -> 
         //TODO
@@ -75,19 +86,17 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>)  = function
          
         vars
     | TWhile(cond, body) ->
-        //this is not correct
         let startLabel = il.DefineLabel()
         let endLabel = il.DefineLabel()
-        let ifLocal = il.DeclareLocal(typeof<bool>)
+        //let ifLocal = il.DeclareLocal(typeof<bool>)
         il.MarkLabel(startLabel)
         let vars = eval il vars cond
-        il.Emit(OpCodes.Stloc, ifLocal)
-        il.Emit(OpCodes.Ldloc, ifLocal)
+        //il.Emit(OpCodes.Stloc, ifLocal)
+        //il.Emit(OpCodes.Ldloc, ifLocal)
         //If cond == false goto end       
         il.Emit(OpCodes.Brfalse, endLabel)
         //While body
         let vars = eval il vars body
-        il.Emit(OpCodes.Ldc_I4_0)
         il.Emit(OpCodes.Br_S, startLabel)
         il.MarkLabel(endLabel)
         vars
@@ -119,7 +128,7 @@ let compileMethod parameters (mb:MethodBuilder) (exprList:TExpr list) =
     let il = mb.GetILGenerator()
     
     exprList|>List.fold(fun vars expr -> eval il vars expr) Map.empty
-    
+    il.Emit(OpCodes.Ret)
 
 let compileClass (tb:TypeBuilder) body = 
     body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) -> ignore <|
