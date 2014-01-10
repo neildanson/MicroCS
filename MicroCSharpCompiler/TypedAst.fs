@@ -16,7 +16,7 @@ and TNamespaceBody =
 and TInterfaceBody =
 | TMethod of Type option * Name * (Type * Name) list
 and TClassBody = 
-| TMethod of AccessModifier * Type option * Name * (Type * Name) list * TExpr list 
+| TMethod of AccessModifier * Type option * MethodBuilder * (Type * Name) list * TExpr list 
 and TExpr = 
 | TScope of TExpr list
 | TVar of Type * Name
@@ -188,21 +188,25 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
      | Assign(expr, expr') -> 
         TAssign(toTypedExpr usings variables parameters expr, toTypedExpr usings variables parameters expr')
 
-let (|CLASSMETHOD|_|) (b, usings) = 
+let (|CLASSMETHOD|_|) (b, usings, tb:TypeBuilder) = 
     match b with
-    | ClassBody.Method(acccessModifier, typename, name, parameters, exprList) -> 
+    | ClassBody.Method(modifier, typename, name, parameters, exprList) -> 
         let returnType = resolveType typename usings
         let parameters = parameters |> List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //TODO - dont use .Value
         //MUTABLE STATE!!!
         let variables = Dictionary<_,_>()
-        Some(TClassBody.TMethod(acccessModifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings variables parameters e)))
+        let name = match returnType with
+                   | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 
+                                                         parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 
+                   | None ->  tb.DefineMethod(name, accessModifierToMethodAttribute modifier)
+        Some(TClassBody.TMethod(modifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings variables parameters e)))
     | _ -> None
 
 let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
     match body with
     | Class(name, visibility, body) -> 
         let definedType = mb.DefineType(namespaceName+"."+name, accessModifierToTypeAttribute visibility)
-        let methods = body |> List.choose(fun b -> match (b, usings) with CLASSMETHOD(m) -> Some(m) | _ -> None)
+        let methods = body |> List.choose(fun b -> match (b, usings, definedType) with CLASSMETHOD(m) -> Some(m) | _ -> None)
         Some(definedType, methods)
     | _ -> None
 

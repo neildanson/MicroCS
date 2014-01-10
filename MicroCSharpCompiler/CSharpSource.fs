@@ -137,12 +137,14 @@ namespace TestNamespace
 
         public void TestDoWhile()
         {
+            int i = 50;
             do
             {
                 Console.WriteLine("Foo");
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
+                i = i - 1;
             }
-            while (true);
+            while (i > 0);
         }
 
     }

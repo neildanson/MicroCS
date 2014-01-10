@@ -159,11 +159,7 @@ let compileMethod (parameters:(Type * Name) list) (mb:MethodBuilder) (exprList:T
 
 let compileClass (tb:TypeBuilder) body = 
     body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) -> ignore <|
-                        compileMethod parameters
-                            (match returnType with
-                             | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 
-                                                                   parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 
-                             | None ->  tb.DefineMethod(name, accessModifierToMethodAttribute modifier))  body)
+                        compileMethod parameters name body)
     tb
 
 let compileType = function
