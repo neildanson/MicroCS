@@ -94,6 +94,12 @@ namespace TestNamespace
             }
         }
 
+        public Random NonDefaultConstructor()
+        {
+            Random r = new Random(100);
+            return r;
+        }
+
         public bool DoSomething2()
         {
             string xxx = "foo" + "bar";

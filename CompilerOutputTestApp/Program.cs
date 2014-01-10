@@ -13,6 +13,7 @@ namespace CompilerOutputTestApp
         {
             var x = new TestNamespace.TestClass();
             var y = x.TestParameterAdd(40, 50);
+            var r = x.NonDefaultConstructor();
             x.TestWhile2();
             x.TestWhile();
             x.DoSomething2();

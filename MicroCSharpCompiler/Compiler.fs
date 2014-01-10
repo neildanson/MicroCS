@@ -11,8 +11,9 @@ open TypedAst
 //EnumBuilder and TypeBuilder both need to CreateType, but method defined seperately
 
 let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:ParameterBuilder list) = function
-    | TConstructor(t, parameters) ->
-        il.Emit(OpCodes.Newobj, t.GetConstructor([||])) //Todo get params from Parameter Expressions
+    | TConstructor(t, ci, parameters') ->
+        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars 
+        il.Emit(OpCodes.Newobj, ci) //Todo get params from Parameter Expressions
         vars
     | TInstanceCall(TRef(_,name), methodInfo, parameters') when vars.[name].LocalType.IsValueType ->
         il.Emit(OpCodes.Ldloca, vars.[name]) 
@@ -99,15 +100,9 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         il.EndScope()
         vars
     | TIf(cond, ifTrue) -> 
-        //TODO
         let label = il.DefineLabel()
-        let ifLocal = il.DeclareLocal(typeof<bool>)
         let vars = eval il vars parameters cond
-        il.Emit(OpCodes.Stloc, ifLocal)
-        il.Emit(OpCodes.Ldloc, ifLocal)
-
         il.Emit(OpCodes.Brfalse, label)
-        
         let vars = eval il vars parameters ifTrue
         il.MarkLabel(label)
          
@@ -115,11 +110,8 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
     | TWhile(cond, body) ->
         let startLabel = il.DefineLabel()
         let endLabel = il.DefineLabel()
-        //let ifLocal = il.DeclareLocal(typeof<bool>)
         il.MarkLabel(startLabel)
         let vars = eval il vars parameters cond
-        //il.Emit(OpCodes.Stloc, ifLocal)
-        //il.Emit(OpCodes.Ldloc, ifLocal)
         //If cond == false goto end       
         il.Emit(OpCodes.Brfalse, endLabel)
         //While body
@@ -128,28 +120,22 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         il.MarkLabel(endLabel)
         vars
     | TDoWhile(body,cond) ->
-        //this is not correct
         let startLabel = il.DefineLabel()
-        let ifLocal = il.DeclareLocal(typeof<bool>)
         il.MarkLabel(startLabel)
         let vars = eval il vars parameters body
         
         let vars = eval il vars parameters cond
-        il.Emit(OpCodes.Stloc, ifLocal)
-        il.Emit(OpCodes.Ldloc, ifLocal)
         //If cond == false goto end       
         //While body
         il.Emit(OpCodes.Brtrue, startLabel)
         vars
     | TAssign(TVar(type', name), rhs) -> 
-        //TODO
         let vars = eval il vars parameters (TVar(type',name))
         let local = vars.[name]
         let vars = eval il vars parameters rhs
         il.Emit(OpCodes.Stloc, local)        
         vars
     | TAssign(TRef(type', name), rhs) -> 
-        //TODO
         let local = vars.[name]
         let vars = eval il vars parameters rhs
         il.Emit(OpCodes.Stloc, local)        

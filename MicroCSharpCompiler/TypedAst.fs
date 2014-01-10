@@ -30,7 +30,7 @@ and TExpr =
 //End
 | TInstanceCall of TExpr * MethodInfo * TExpr list
 | TStaticCall of MethodInfo * TExpr list
-| TConstructor of Type * TExpr list 
+| TConstructor of Type * ConstructorInfo * TExpr list 
 | TAdd of TExpr * TExpr
 | TSubtract of TExpr * TExpr
 | TMultiply of TExpr * TExpr
@@ -65,7 +65,7 @@ let rec getType = function
 | TBool(_) -> Some(typeof<bool>)
 | TInstanceCall(_,mi,_)
 | TStaticCall(mi,_) -> if mi.ReturnType = typeof<Void> then None else Some(mi.ReturnType)
-| TConstructor(t,_) -> Some(t)
+| TConstructor(t,ci,_) -> Some(t)
 | TAdd(e,e') -> getType e //for now assume that you can only add type x to type x
 | TSubtract(e,e') -> getType e //for now assume that you can only add type x to type x
 | TMultiply(e,e') -> getType e //for now assume that you can only add type x to type x
@@ -167,7 +167,10 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
      | Constructor(typeName, parameters') -> 
         let t = resolveType typeName usings
         match t with
-        | Some(t) -> TConstructor(t,  parameters' |> List.map(fun p -> toTypedExpr usings variables parameters p)) 
+        | Some(t) ->
+            let parameters' = parameters' |> List.map(fun p -> toTypedExpr usings variables parameters p)
+            let ci = t.GetConstructor(parameters'|>List.map(getType)|> List.choose id |> List.toArray)
+            TConstructor(t, ci,  parameters') 
         | None -> failwith "void not a valid type for a variable" 
         
      | Add(lhs, rhs) -> TAdd(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs)
