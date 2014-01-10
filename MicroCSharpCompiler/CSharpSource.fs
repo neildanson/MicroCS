@@ -12,6 +12,11 @@ namespace TestNamespace
 
     public class TestClass
     {
+        public int TestParameterAdd(int a, int b)
+        {
+            return a + b;
+        }
+
         object TestReturningNewObject1()
         {
             object o = new object();
