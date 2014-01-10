@@ -26,7 +26,7 @@ open Ast
 %token NULL
 
 //Language noise
-%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD COMMENT
+%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD SUBTRACT MULTIPLY DIVIDE COMMENT LESSTHAN GREATERTHAN
 
 %token EOF
 
@@ -96,6 +96,8 @@ Expr:
 	| IF LPAREN Expr RPAREN Expr		{ If($3, $5) }
 	| NAME LPAREN ParameterExprList RPAREN 	{ Call($1, $3) }
 	| Expr EQUALS EQUALS Expr			{ Equals($1, $4) }
+	| Expr LESSTHAN Expr				{ LessThan($1, $3) }
+	| Expr GREATERTHAN Expr				{ GreaterThan($1, $3) }
 	| INT								{ Int($1) }
 	| FLOAT								{ Float($1) }
 	| BOOL								{ Bool($1) }
@@ -103,6 +105,9 @@ Expr:
 	| Expr EQUALS Expr					{ Assign($1, $3) }
 	| NAME NAME							{ Var ($1, $2) }
 	| Expr ADD Expr						{ Add($1, $3) }
+	| Expr SUBTRACT Expr				{ Subtract($1, $3) }
+	| Expr MULTIPLY Expr				{ Multiply($1, $3) }
+	| Expr DIVIDE Expr					{ Divide($1, $3) }
 	| STRING							{ String($1) }
 	| NAME								{ Ref($1) }
 	| DO Expr WHILE LPAREN Expr RPAREN 	{ DoWhile($2, $5) }

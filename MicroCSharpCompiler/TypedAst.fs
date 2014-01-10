@@ -32,7 +32,12 @@ and TExpr =
 | TStaticCall of MethodInfo * TExpr list
 | TConstructor of Type * TExpr list 
 | TAdd of TExpr * TExpr
+| TSubtract of TExpr * TExpr
+| TMultiply of TExpr * TExpr
+| TDivide of TExpr * TExpr
 | TEquals of TExpr * TExpr
+| TLessThan of TExpr * TExpr
+| TGreaterThan of TExpr * TExpr
 | TIf of TExpr * TExpr
 | TWhile of TExpr * TExpr
 | TDoWhile of TExpr * TExpr 
@@ -62,7 +67,12 @@ let rec getType = function
 | TStaticCall(mi,_) -> if mi.ReturnType = typeof<Void> then None else Some(mi.ReturnType)
 | TConstructor(t,_) -> Some(t)
 | TAdd(e,e') -> getType e //for now assume that you can only add type x to type x
-| TEquals(e, e') -> Some(typeof<bool>)
+| TSubtract(e,e') -> getType e //for now assume that you can only add type x to type x
+| TMultiply(e,e') -> getType e //for now assume that you can only add type x to type x
+| TDivide(e,e') -> getType e //for now assume that you can only add type x to type x
+| TEquals(_, _)
+| TLessThan(_,_)
+| TGreaterThan(_,_)  -> Some(typeof<bool>)
 | TReturn(e) -> getType e
 | TRef(t, _) -> Some(t)
 | TScope(_) -> None
@@ -160,8 +170,13 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
         | Some(t) -> TConstructor(t,  parameters' |> List.map(fun p -> toTypedExpr usings variables parameters p)) 
         | None -> failwith "void not a valid type for a variable" 
         
-     | Add(expr, expr') -> TAdd(toTypedExpr usings variables parameters expr, toTypedExpr usings variables parameters expr') 
-     | Equals(expr, expr') -> TEquals(toTypedExpr usings variables parameters expr, toTypedExpr usings variables parameters expr') 
+     | Add(lhs, rhs) -> TAdd(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs)
+     | Subtract(lhs, rhs) -> TSubtract(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs)
+     | Multiply(lhs, rhs) -> TMultiply(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs)
+     | Divide(lhs, rhs) -> TDivide(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
+     | Equals(lhs, rhs) -> TEquals(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
+     | LessThan(lhs, rhs) -> TLessThan(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
+     | GreaterThan(lhs,rhs) -> TGreaterThan(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
      | Return(expr) -> TReturn(toTypedExpr usings variables parameters expr)
      | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTypedExpr usings variables parameters expr))
      | If(cond, ifTrue) -> TIf(toTypedExpr usings variables parameters cond, toTypedExpr usings variables parameters ifTrue)

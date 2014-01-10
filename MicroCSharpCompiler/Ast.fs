@@ -38,7 +38,12 @@ and Expr =
 | Call of Name * Expr list
 | Constructor of TypeName * Expr list
 | Add of Expr * Expr
+| Subtract of Expr * Expr
+| Multiply of Expr * Expr
+| Divide of Expr * Expr
 | Equals of Expr * Expr
+| LessThan of Expr * Expr
+| GreaterThan of Expr * Expr
 | If of Expr * Expr
 | Return of Expr
 | While of Expr * Expr

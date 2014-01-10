@@ -8,7 +8,7 @@ let lexeme lexbuf = LexBuffer<char>.LexemeString lexbuf
 }
 
 // These are some regular expression definitions
-let name = ['a'-'z' 'A'-'Z' '0'-'9' '.']
+let name = ['a'-'z' 'A'-'Z' '0'-'9' '.' '_']
 
 let digit = ['0'-'9']
 let whitespace = [' ' '\t' ]
@@ -26,9 +26,7 @@ rule tokenize = parse
 | "struct"		{ STRUCT }
 | "enum"		{ ENUM }
 //
-| accessmodifier? { let am = lexeme lexbuf
-                    printf "am %s\n" am
-                    ACCESSMODIFIER (am) }
+| accessmodifier? { ACCESSMODIFIER (lexeme lexbuf) }
 // TODO Remove ;)
 | "null"		{ NULL }
 //Noise
@@ -40,7 +38,12 @@ rule tokenize = parse
 | ","			{ COMMA }
 | "\""			{ QUOTE }
 | "="			{ EQUALS }
+| "<"			{ LESSTHAN }
+| ">"			{ GREATERTHAN }
 | "+"			{ ADD } 
+| "-"			{ SUBTRACT }
+| "*"			{ MULTIPLY }
+| "/"			{ DIVIDE }
 | "new"			{ NEW }
 | "return"		{ RETURN }
 | "while"		{ WHILE }

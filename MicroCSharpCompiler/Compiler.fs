@@ -58,10 +58,36 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Add)
         vars
+    
+    | TSubtract(expr, expr') -> 
+        let vars = eval il vars parameters expr
+        let vars = eval il vars parameters expr'
+        il.Emit(OpCodes.Sub)
+        vars
+    | TMultiply(expr, expr') -> 
+        let vars = eval il vars parameters expr
+        let vars = eval il vars parameters expr'
+        il.Emit(OpCodes.Mul)
+        vars
+    | TDivide(expr, expr') -> 
+        let vars = eval il vars parameters expr
+        let vars = eval il vars parameters expr'
+        il.Emit(OpCodes.Div)
+        vars
     | TEquals(expr, expr') -> 
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Ceq)
+        vars
+    | TLessThan(expr, expr') -> 
+        let vars = eval il vars parameters expr
+        let vars = eval il vars parameters expr'
+        il.Emit(OpCodes.Clt)
+        vars
+    | TGreaterThan(expr, expr') -> 
+        let vars = eval il vars parameters expr
+        let vars = eval il vars parameters expr'
+        il.Emit(OpCodes.Cgt)
         vars
     | TReturn(expr) ->
         let vars = eval il vars parameters expr
@@ -128,7 +154,7 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         let vars = eval il vars parameters rhs
         il.Emit(OpCodes.Stloc, local)        
         vars
-    | _ -> failwith "Currently unsupported"
+    | x -> failwith "Currently unsupported"
 
 let compileInterface (tb:TypeBuilder) body = 
     body|>List.iter(fun (TInterfaceBody.TMethod(returnType, name, parameters)) -> 

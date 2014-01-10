@@ -77,9 +77,19 @@ namespace TestNamespace
         public void TestWhile()
         {
             int i = 0;
-            while ( i == 0)
+            while ( i < 100)
             {
                 i = i + 1;
+                Console.WriteLine(i.ToString());
+            }
+        }
+
+        public void TestWhile2()
+        {
+            int i = 100;
+            while ( i > 0)
+            {
+                i = i - 1;
                 Console.WriteLine(i.ToString());
             }
         }
