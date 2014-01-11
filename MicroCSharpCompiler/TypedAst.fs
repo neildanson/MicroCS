@@ -115,8 +115,10 @@ let resolveType name usings =
         if t <> null then Some(t) 
         else failwith "Unrecognized type"
 
-let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list) = function
-     | Expr(expr) -> toTypedExpr usings variables parameters expr
+let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list) (typeBuilder:TypeBuilder) expr= 
+     let toTyped expr = toTypedExpr usings variables parameters typeBuilder expr 
+     match expr with
+     | Expr(expr) -> toTyped expr
      | Var(typeName, name) -> 
         let t = resolveType typeName usings
         match t with
@@ -147,7 +149,7 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
             let var = match variables.TryGetValue beforeDot with
                       | true, t -> 
                             let methodName = name.Substring(name.LastIndexOf(".") + 1 )
-                            let parameters' = parameters' |> List.map(fun p -> toTypedExpr usings variables parameters p)
+                            let parameters' = parameters' |> List.map(fun p -> toTyped  p)
 
                             let mi = t.GetMethod(methodName, parameters'|>List.map(getType)|> List.choose id |> List.toArray)
                             //Now its not entirely true that this will always be a ref.....
@@ -157,36 +159,40 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
                             let className = name.Substring(0,name.LastIndexOf("."))
                             let methodName = name.Substring(name.LastIndexOf(".") + 1 )
                             let typeOf = getTypeByName className usings
-                            let parameters' = parameters' |> List.map(fun p -> toTypedExpr usings variables parameters p)
+                            let parameters' = parameters' |> List.map(fun p -> toTyped p)
                             
                             let mi = typeOf.GetMethod(methodName, parameters'|>List.map(getType)|> List.choose id |> List.toArray)
                             TStaticCall(mi, parameters') 
             var
         else
-            failwith "'this' methods not supported yet"
+            let parameters' = parameters' |> List.map(fun p -> toTyped p)
+            //Get Method fails on TypeBuilders!!
+            let mi = typeBuilder.GetMethod(name, parameters'|>List.map(getType)|> List.choose id |> List.toArray)
+            TInstanceCall(TRef(typeBuilder, "this"), mi, parameters')
+            //failwith "'this' methods not supported yet"
      | Constructor(typeName, parameters') -> 
         let t = resolveType typeName usings
         match t with
         | Some(t) ->
-            let parameters' = parameters' |> List.map(fun p -> toTypedExpr usings variables parameters p)
+            let parameters' = parameters' |> List.map(fun p -> toTyped p)
             let ci = t.GetConstructor(parameters'|>List.map(getType)|> List.choose id |> List.toArray)
             TConstructor(t, ci,  parameters') 
         | None -> failwith "void not a valid type for a variable" 
         
-     | Add(lhs, rhs) -> TAdd(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs)
-     | Subtract(lhs, rhs) -> TSubtract(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs)
-     | Multiply(lhs, rhs) -> TMultiply(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs)
-     | Divide(lhs, rhs) -> TDivide(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
-     | Equals(lhs, rhs) -> TEquals(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
-     | LessThan(lhs, rhs) -> TLessThan(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
-     | GreaterThan(lhs,rhs) -> TGreaterThan(toTypedExpr usings variables parameters lhs, toTypedExpr usings variables parameters rhs) 
-     | Return(expr) -> TReturn(toTypedExpr usings variables parameters expr)
-     | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTypedExpr usings variables parameters expr))
-     | If(cond, ifTrue) -> TIf(toTypedExpr usings variables parameters cond, toTypedExpr usings variables parameters ifTrue)
-     | While(cond, body) -> TWhile(toTypedExpr usings variables parameters cond, toTypedExpr usings variables parameters body)
-     | DoWhile(body, cond) -> TDoWhile(toTypedExpr usings variables parameters body, toTypedExpr usings variables parameters cond)
-     | Assign(expr, expr') -> 
-        TAssign(toTypedExpr usings variables parameters expr, toTypedExpr usings variables parameters expr')
+     | Add(lhs, rhs) -> TAdd(toTyped lhs, toTyped rhs)
+     | Subtract(lhs, rhs) -> TSubtract(toTyped lhs, toTyped rhs)
+     | Multiply(lhs, rhs) -> TMultiply(toTyped lhs, toTyped rhs)
+     | Divide(lhs, rhs) -> TDivide(toTyped lhs, toTyped rhs) 
+     | Equals(lhs, rhs) -> TEquals(toTyped lhs, toTyped rhs) 
+     | LessThan(lhs, rhs) -> TLessThan(toTyped lhs, toTyped rhs) 
+     | GreaterThan(lhs,rhs) -> TGreaterThan(toTyped lhs, toTyped rhs) 
+     | Return(expr) -> TReturn(toTyped expr)
+     | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTyped expr))
+     | If(cond, ifTrue) -> TIf(toTyped cond, toTyped ifTrue)
+     | While(cond, body) -> TWhile(toTyped cond, toTyped body)
+     | DoWhile(body, cond) -> TDoWhile(toTyped body, toTyped cond)
+     | Assign(lhs, rhs) -> 
+        TAssign(toTyped lhs, toTyped rhs)
 
 let (|CLASSMETHOD|_|) (b, usings, tb:TypeBuilder) = 
     match b with
@@ -199,7 +205,7 @@ let (|CLASSMETHOD|_|) (b, usings, tb:TypeBuilder) =
                    | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 
                                                          parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 
                    | None ->  tb.DefineMethod(name, accessModifierToMethodAttribute modifier)
-        Some(TClassBody.TMethod(modifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings variables parameters e)))
+        Some(TClassBody.TMethod(modifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings variables parameters tb e)))
     | _ -> None
 
 let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 

@@ -147,6 +147,11 @@ namespace TestNamespace
             while (i > 0);
         }
 
+        public void TestPrivateMethods()
+        {
+            TestComplexCalls();
+        }
+
     }
 
     internal enum TestEnum 
