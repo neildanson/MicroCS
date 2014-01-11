@@ -21,7 +21,9 @@ namespace CompilerOutputTestApp
             x.TestEquality();
             x.TestInferMethodReturnType();
             x.TestIf();
-            x.TestDoWhile();
+            //x.TestDoWhile();
+            x.Fibonacci(100);
+            Console.ReadLine();
         }
     }
 }

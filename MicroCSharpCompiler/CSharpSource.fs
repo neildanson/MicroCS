@@ -147,11 +147,25 @@ namespace TestNamespace
             while (i > 0);
         }
 
-        public void TestPrivateMethods()
+        public void Fibonacci(int count)
         {
-            TestComplexCalls();
+            int n = 0;
+            while (n < count)
+            {
+                int i = 0;
+                int a = 0;
+                int b = 1;
+                while (i < n)
+                {
+                    int temp = a;
+                    a = b;
+                    b = temp + a;
+                    i = i + 1;
+                }
+                n = n + 1;
+                Console.WriteLine(a.ToString())
+            }
         }
-
     }
 
     internal enum TestEnum 

@@ -204,7 +204,8 @@ let (|CLASSMETHOD|_|) (b, usings, tb:TypeBuilder) =
         let name = match returnType with
                    | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 
                                                          parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 
-                   | None ->  tb.DefineMethod(name, accessModifierToMethodAttribute modifier)
+                   | None ->  tb.DefineMethod(name, accessModifierToMethodAttribute modifier, typeof<System.Void>, 
+                                              parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray)
         Some(TClassBody.TMethod(modifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings variables parameters tb e)))
     | _ -> None
 
