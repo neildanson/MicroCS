@@ -26,7 +26,7 @@ open Ast
 %token NULL
 
 //Language noise
-%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD SUBTRACT MULTIPLY DIVIDE COMMENT LESSTHAN GREATERTHAN
+%token LCURLY RCURLY SEMICOLON LPAREN RPAREN COMMA QUOTE EQUALS ADD SUBTRACT MULTIPLY DIVIDE COMMENT LESSTHAN GREATERTHAN MODULUS AND
 
 %token EOF
 
@@ -98,6 +98,7 @@ Expr:
 	| Expr EQUALS EQUALS Expr			{ Equals($1, $4) }
 	| Expr LESSTHAN Expr				{ LessThan($1, $3) }
 	| Expr GREATERTHAN Expr				{ GreaterThan($1, $3) }
+	| Expr AND Expr						{ And($1, $3) }
 	| INT								{ Int($1) }
 	| FLOAT								{ Float($1) }
 	| BOOL								{ Bool($1) }
@@ -108,6 +109,7 @@ Expr:
 	| Expr SUBTRACT Expr				{ Subtract($1, $3) }
 	| Expr MULTIPLY Expr				{ Multiply($1, $3) }
 	| Expr DIVIDE Expr					{ Divide($1, $3) }
+	| Expr MODULUS Expr					{ Modulus($1, $3) }
 	| STRING							{ String($1) }
 	| NAME								{ Ref($1) }
 	| DO Expr WHILE LPAREN Expr RPAREN 	{ DoWhile($2, $5) }

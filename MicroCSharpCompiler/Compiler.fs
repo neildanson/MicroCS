@@ -75,6 +75,11 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Div)
         vars
+    | TModulus(expr, expr') -> 
+        let vars = eval il vars parameters expr
+        let vars = eval il vars parameters expr'
+        il.Emit(OpCodes.Rem)
+        vars
     | TEquals(expr, expr') -> 
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
@@ -89,6 +94,17 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Cgt)
+        vars
+    | TAnd(lhs, rhs) ->
+        let l1 = il.DefineLabel()
+        let l2 = il.DefineLabel()
+        let vars = eval il vars parameters lhs
+        il.Emit(OpCodes.Brfalse, l1)
+        let vars = eval il vars parameters rhs
+        il.Emit(OpCodes.Br_S, l2)
+        il.MarkLabel(l1)
+        il.Emit(OpCodes.Ldc_I4_0)
+        il.MarkLabel(l2)
         vars
     | TReturn(expr) ->
         let vars = eval il vars parameters expr
@@ -158,8 +174,8 @@ let compileMethod (parameters:(Type * Name) list) (mb:MethodBuilder) (exprList:T
     il.Emit(OpCodes.Ret)
 
 let compileClass (tb:TypeBuilder) body = 
-    body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) -> ignore <|
-                        compileMethod parameters name body)
+    body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) -> 
+                        ignore <| compileMethod parameters name body)
     tb
 
 let compileType = function

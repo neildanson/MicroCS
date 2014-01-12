@@ -44,6 +44,8 @@ rule tokenize = parse
 | "-"			{ SUBTRACT }
 | "*"			{ MULTIPLY }
 | "/"			{ DIVIDE }
+| "%"			{ MODULUS }
+| "&&"			{ AND }
 | "new"			{ NEW }
 | "return"		{ RETURN }
 | "while"		{ WHILE }

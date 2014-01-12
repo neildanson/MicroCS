@@ -166,6 +166,34 @@ namespace TestNamespace
                 Console.WriteLine(a.ToString())
             }
         }
+
+        public void TestModulus()
+        {
+            int x = 3 % 1;
+        }
+
+        public bool And(bool t, bool f)
+        {
+            return t && f;
+        }
+
+        public void FizzBuzz(int max)
+        {
+            int i = 1;
+            while (i < max)
+            {
+                int rem5 = i % 5;
+                int rem3 = i % 3;
+                if (rem3 == 0)
+                    Console.Write("Fizz");
+                if (rem5 == 0)
+                    Console.Write("Buzz");
+                if (rem5 > 0 && rem3 > 0)
+                    Console.Write(i);
+                Console.WriteLine();
+                i = i + 1;
+            }
+        }
     }
 
     internal enum TestEnum 

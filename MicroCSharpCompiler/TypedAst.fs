@@ -35,9 +35,11 @@ and TExpr =
 | TSubtract of TExpr * TExpr
 | TMultiply of TExpr * TExpr
 | TDivide of TExpr * TExpr
+| TModulus of TExpr * TExpr
 | TEquals of TExpr * TExpr
 | TLessThan of TExpr * TExpr
 | TGreaterThan of TExpr * TExpr
+| TAnd of TExpr * TExpr
 | TIf of TExpr * TExpr
 | TWhile of TExpr * TExpr
 | TDoWhile of TExpr * TExpr 
@@ -70,6 +72,8 @@ let rec getType = function
 | TSubtract(e,e') -> getType e //for now assume that you can only add type x to type x
 | TMultiply(e,e') -> getType e //for now assume that you can only add type x to type x
 | TDivide(e,e') -> getType e //for now assume that you can only add type x to type x
+| TModulus(e,e') -> Some(typeof<int>) //assume mod only makes sense on ints
+| TAnd(_,_)
 | TEquals(_, _)
 | TLessThan(_,_)
 | TGreaterThan(_,_)  -> Some(typeof<bool>)
@@ -184,8 +188,10 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
      | Multiply(lhs, rhs) -> TMultiply(toTyped lhs, toTyped rhs)
      | Divide(lhs, rhs) -> TDivide(toTyped lhs, toTyped rhs) 
      | Equals(lhs, rhs) -> TEquals(toTyped lhs, toTyped rhs) 
+     | Modulus(lhs, rhs) -> TModulus(toTyped lhs, toTyped rhs)
      | LessThan(lhs, rhs) -> TLessThan(toTyped lhs, toTyped rhs) 
      | GreaterThan(lhs,rhs) -> TGreaterThan(toTyped lhs, toTyped rhs) 
+     | And(lhs,rhs) -> TAnd(toTyped lhs, toTyped rhs) 
      | Return(expr) -> TReturn(toTyped expr)
      | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTyped expr))
      | If(cond, ifTrue) -> TIf(toTyped cond, toTyped ifTrue)
