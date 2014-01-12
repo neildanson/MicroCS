@@ -188,7 +188,7 @@ namespace TestNamespace
                     Console.Write("Fizz");
                 if (rem5 == 0)
                     Console.Write("Buzz");
-                if (rem5 > 0 && rem3 > 0)
+                if ((rem5 > 0) && (rem3 > 0))
                     Console.Write(i);
                 Console.WriteLine();
                 i = i + 1;

@@ -91,6 +91,7 @@ ExprList:
 
 Expr:
 	| Expr SEMICOLON					{ Expr($1) }
+	| LPAREN Expr RPAREN				{ $2 }
 	| LCURLY ExprList RCURLY			{ Scope($2) }
 	| NEW NAME LPAREN ParameterExprList RPAREN { Constructor($2, $4) }
 	| IF LPAREN Expr RPAREN Expr		{ If($3, $5) }
