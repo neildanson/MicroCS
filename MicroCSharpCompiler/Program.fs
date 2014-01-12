@@ -14,11 +14,10 @@ open Lexer
 open Parser
 open CSharpSource
 
-
-let parse input = 
-    let tokenized = LexBuffer<char>.FromString(input) 
+let parse input =
+    let tokenized = LexBuffer<char>.FromString(input)
     try
-        Parser.start Lexer.tokenize tokenized 
+        Parser.start Lexer.tokenize tokenized
     with e ->
         let pos = tokenized.EndPos
         let line = pos.Line
@@ -29,8 +28,7 @@ let parse input =
         printf "Last loken: %s" lastToken
         printf "\n"
         System.Console.ReadLine() |> ignore
-        exit 1   
-               
+        exit 1
 
 let save name (ass: Emit.AssemblyBuilder) = ass.Save(name)
 
@@ -41,13 +39,13 @@ let Compile() =
     sw.Restart()
 
     //Perhaps a new appdomain is in order?
-    references [ "System.Xml"; "System.Core"] 
-    cSharpProgram 
-    |> parse 
+    references [ "System.Xml"; "System.Core"]
+    cSharpProgram
+    |> parse
     |> typed "CSharpCompilerExample"
     |> compile
     |> save "CSharpCompilerExample.dll"
-    
+
     printf "Time to Compile %dms" sw.ElapsedMilliseconds
     Console.ReadLine() |> ignore
 

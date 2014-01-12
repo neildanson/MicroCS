@@ -6,18 +6,18 @@ open System.Collections.Generic
 open System.Reflection
 open System.Reflection.Emit
 
-type TFile = 
+type TFile =
 | TFile of TNamespaceBody list
-and TNamespaceBody = 
+and TNamespaceBody =
 | TInterface of TypeBuilder * TInterfaceBody list
 | TClass of TypeBuilder * TClassBody list
 | TStruct of TypeBuilder
-| TEnum of Type 
+| TEnum of Type
 and TInterfaceBody =
 | TMethod of Type option * Name * (Type * Name) list
-and TClassBody = 
-| TMethod of AccessModifier * Type option * MethodBuilder * (Type * Name) list * TExpr list 
-and TExpr = 
+and TClassBody =
+| TMethod of AccessModifier * Type option * MethodBuilder * (Type * Name) list * TExpr list
+and TExpr =
 | TScope of TExpr list
 | TVar of Type * Name
 | TRef of Type * Name
@@ -30,7 +30,7 @@ and TExpr =
 //End
 | TInstanceCall of TExpr * MethodInfo * TExpr list
 | TStaticCall of MethodInfo * TExpr list
-| TConstructor of Type * ConstructorInfo * TExpr list 
+| TConstructor of Type * ConstructorInfo * TExpr list
 | TAdd of TExpr * TExpr
 | TSubtract of TExpr * TExpr
 | TMultiply of TExpr * TExpr
@@ -42,7 +42,7 @@ and TExpr =
 | TAnd of TExpr * TExpr
 | TIf of TExpr * TExpr
 | TWhile of TExpr * TExpr
-| TDoWhile of TExpr * TExpr 
+| TDoWhile of TExpr * TExpr
 | TReturn of TExpr
 | TAssign of TExpr * TExpr
 
@@ -86,26 +86,26 @@ let rec getType = function
 | TIf(_, ifTrue) -> getType ifTrue //Note return types from if must match from both sides
 
 //TODO - Lookup locally defined types
-let getTypeByName name usings = 
+let getTypeByName name usings =
     let t = Type.GetType name
     match t with
-    | null -> 
+    | null ->
         let usings = usings |>List.rev //We reverse the order as the last defined takes greatest precedence
         let possibleTypeNames = usings |> List.map(fun using -> using + "." + name)
         let loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies()
 
-        let possibleFullyQualifiedTypes = 
-            possibleTypeNames 
+        let possibleFullyQualifiedTypes =
+            possibleTypeNames
             |> List.collect (fun t -> loadedAssemblies |> Seq.map(fun a -> t + "," + a.FullName) |> Seq.toList)
             |> List.map(fun tn -> Type.GetType(tn))
             |> List.filter(fun t -> t <> null)
         match possibleFullyQualifiedTypes with
         | head::_ -> head
         | _ -> null
-        
+
     | t -> t
-    
-let resolveType name usings = 
+
+let resolveType name usings =
     match name with
     | "void" -> None
     | "int" -> Some(typeof<int>)
@@ -114,23 +114,23 @@ let resolveType name usings =
     | "string" -> Some(typeof<string>)
     | "bool" -> Some(typeof<bool>)
     | "object" -> Some(typeof<obj>)
-    | typeName -> 
+    | typeName ->
         let t = getTypeByName typeName usings
-        if t <> null then Some(t) 
+        if t <> null then Some(t)
         else failwith "Unrecognized type"
 
-let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list) (typeBuilder:TypeBuilder) expr= 
-     let toTyped expr = toTypedExpr usings variables parameters typeBuilder expr 
+let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list) (typeBuilder:TypeBuilder) expr=
+     let toTyped expr = toTypedExpr usings variables parameters typeBuilder expr
      match expr with
      | Expr(expr) -> toTyped expr
-     | Var(typeName, name) -> 
+     | Var(typeName, name) ->
         let t = resolveType typeName usings
         match t with
-        | Some(t) -> 
+        | Some(t) ->
             variables.Add(name, t)
             TVar(t, name)
-        | None -> failwith "void not a valid type for a variable" 
-     | Ref(name) -> 
+        | None -> failwith "void not a valid type for a variable"
+     | Ref(name) ->
         let var = match variables.TryGetValue(name) with
                   | true, value -> Some(value)
                   | _ -> None
@@ -144,14 +144,14 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
      | Float(f) -> TFloat(f)
      | Double(d) -> TDouble(d)
      | Bool(b) -> TBool(b)
-     | Call(name, parameters') -> 
+     | Call(name, parameters') ->
         //If theres a . then its either an instance call or a static call
         let firstDot = name.IndexOf('.')
         if firstDot <> -1 then
-            //See if the 
+            //See if the
             let beforeDot = name.Substring(0, firstDot)
             let var = match variables.TryGetValue beforeDot with
-                      | true, t -> 
+                      | true, t ->
                             let methodName = name.Substring(name.LastIndexOf(".") + 1 )
                             let parameters' = parameters' |> List.map(fun p -> toTyped  p)
 
@@ -159,14 +159,14 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
                             //Now its not entirely true that this will always be a ref.....
                             TInstanceCall(TRef(t, beforeDot), mi, parameters')
 
-                      | _ ->                     
+                      | _ ->
                             let className = name.Substring(0,name.LastIndexOf("."))
                             let methodName = name.Substring(name.LastIndexOf(".") + 1 )
                             let typeOf = getTypeByName className usings
                             let parameters' = parameters' |> List.map(fun p -> toTyped p)
-                            
+
                             let mi = typeOf.GetMethod(methodName, parameters'|>List.map(getType)|> List.choose id |> List.toArray)
-                            TStaticCall(mi, parameters') 
+                            TStaticCall(mi, parameters')
             var
         else
             let parameters' = parameters' |> List.map(fun p -> toTyped p)
@@ -174,75 +174,75 @@ let rec toTypedExpr usings (variables:Dictionary<_,_>) (parameters:(_ * _) list)
             let mi = typeBuilder.GetMethod(name, parameters'|>List.map(getType)|> List.choose id |> List.toArray)
             TInstanceCall(TRef(typeBuilder, "this"), mi, parameters')
             //failwith "'this' methods not supported yet"
-     | Constructor(typeName, parameters') -> 
+     | Constructor(typeName, parameters') ->
         let t = resolveType typeName usings
         match t with
         | Some(t) ->
             let parameters' = parameters' |> List.map(fun p -> toTyped p)
             let ci = t.GetConstructor(parameters'|>List.map(getType)|> List.choose id |> List.toArray)
-            TConstructor(t, ci,  parameters') 
-        | None -> failwith "void not a valid type for a variable" 
-        
+            TConstructor(t, ci,  parameters')
+        | None -> failwith "void not a valid type for a variable"
+
      | Add(lhs, rhs) -> TAdd(toTyped lhs, toTyped rhs)
      | Subtract(lhs, rhs) -> TSubtract(toTyped lhs, toTyped rhs)
      | Multiply(lhs, rhs) -> TMultiply(toTyped lhs, toTyped rhs)
-     | Divide(lhs, rhs) -> TDivide(toTyped lhs, toTyped rhs) 
-     | Equals(lhs, rhs) -> TEquals(toTyped lhs, toTyped rhs) 
+     | Divide(lhs, rhs) -> TDivide(toTyped lhs, toTyped rhs)
+     | Equals(lhs, rhs) -> TEquals(toTyped lhs, toTyped rhs)
      | Modulus(lhs, rhs) -> TModulus(toTyped lhs, toTyped rhs)
-     | LessThan(lhs, rhs) -> TLessThan(toTyped lhs, toTyped rhs) 
-     | GreaterThan(lhs,rhs) -> TGreaterThan(toTyped lhs, toTyped rhs) 
-     | And(lhs,rhs) -> TAnd(toTyped lhs, toTyped rhs) 
+     | LessThan(lhs, rhs) -> TLessThan(toTyped lhs, toTyped rhs)
+     | GreaterThan(lhs,rhs) -> TGreaterThan(toTyped lhs, toTyped rhs)
+     | And(lhs,rhs) -> TAnd(toTyped lhs, toTyped rhs)
      | Return(expr) -> TReturn(toTyped expr)
      | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTyped expr))
      | If(cond, ifTrue) -> TIf(toTyped cond, toTyped ifTrue)
      | While(cond, body) -> TWhile(toTyped cond, toTyped body)
      | DoWhile(body, cond) -> TDoWhile(toTyped body, toTyped cond)
-     | Assign(lhs, rhs) -> 
+     | Assign(lhs, rhs) ->
         TAssign(toTyped lhs, toTyped rhs)
 
-let (|CLASSMETHOD|_|) (b, usings, tb:TypeBuilder) = 
+let (|CLASSMETHOD|_|) (b, usings, tb:TypeBuilder) =
     match b with
-    | ClassBody.Method(modifier, typename, name, parameters, exprList) -> 
+    | ClassBody.Method(modifier, typename, name, parameters, exprList) ->
         let returnType = resolveType typename usings
         let parameters = parameters |> List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //TODO - dont use .Value
         //MUTABLE STATE!!!
         let variables = Dictionary<_,_>()
         let name = match returnType with
-                   | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType, 
-                                                         parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 
-                   | None ->  tb.DefineMethod(name, accessModifierToMethodAttribute modifier, typeof<System.Void>, 
+                   | Some(returnType) -> tb.DefineMethod(name, accessModifierToMethodAttribute modifier, returnType,
+                                                         parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray)
+                   | None ->  tb.DefineMethod(name, accessModifierToMethodAttribute modifier, typeof<System.Void>,
                                               parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray)
         Some(TClassBody.TMethod(modifier, returnType, name, parameters, exprList|>List.map(fun e -> toTypedExpr usings variables parameters tb e)))
     | _ -> None
 
-let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
+let (|CLASS|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
     match body with
-    | Class(name, visibility, body) -> 
+    | Class(name, visibility, body) ->
         let definedType = mb.DefineType(namespaceName+"."+name, accessModifierToTypeAttribute visibility)
         let methods = body |> List.choose(fun b -> match (b, usings, definedType) with CLASSMETHOD(m) -> Some(m) | _ -> None)
         Some(definedType, methods)
     | _ -> None
 
 let (|INTERFACEMETHOD|_|) (b, usings) =
-    match b with 
-    | Method(typename, name, parameters) -> 
+    match b with
+    | Method(typename, name, parameters) ->
         let returnType = resolveType typename usings
         let parameters = parameters|>List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
         Some(TInterfaceBody.TMethod(returnType, name, parameters))
     | _ -> None
 
-let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
+let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
     match body with
-    | Interface(name, visibility, body) -> 
+    | Interface(name, visibility, body) ->
         let definedType = mb.DefineType(namespaceName+"."+name, TypeAttributes.Abstract ||| TypeAttributes.Interface ||| accessModifierToTypeAttribute visibility)
         let methods = body |> List.choose(fun b -> match (b, usings) with INTERFACEMETHOD(m) -> Some(m) | _ -> None)
         Some(definedType, methods)
     | _ -> None
 
 //Rule break here - I just compile the Enums here - no point doing a 2 pass I think - maybe I'll change my mind later
-let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) = 
+let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
     match body with
-    | Enum(name, visibility, values) -> 
+    | Enum(name, visibility, values) ->
         let eb = mb.DefineEnum(namespaceName+"."+name, accessModifierToTypeAttribute visibility, typeof<int>)
         values|>List.mapi(fun i n -> eb.DefineLiteral(n,i))|>ignore
         Some(eb.CreateType())
@@ -251,18 +251,17 @@ let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
 let compileType mb namespaceBody namespaceName usings =
     match (mb, namespaceBody, namespaceName, usings) with
     | CLASS(tb) -> Some(TClass(tb))
-    | INTERFACE(tb, body) -> Some(TInterface(tb, body)) 
+    | INTERFACE(tb, body) -> Some(TInterface(tb, body))
     | ENUM(tb) -> Some(TEnum(tb))
     | _ -> failwith "Unrecognized Namespace Body"
 
-let typed  filename (ast: File) = 
+let typed  filename (ast: File) =
     let aName = AssemblyName(filename)
     let ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.RunAndSave)
     let mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll", true) //true means debug it seems
     match ast with
-    | File fileBody -> 
+    | File fileBody ->
         let usings = fileBody |> List.choose(fun x -> match x with Using(using) -> Some(using) | _ -> None)
         let namespaces = fileBody |> List.choose(fun x -> match x with Namespace(name, bodyList) -> Some(name, bodyList) | _ -> None)
         ab, TFile(namespaces
                   |>List.collect(fun (name, body) -> body|>List.choose(fun b -> compileType mb b name usings)))
-        

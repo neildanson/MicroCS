@@ -5,25 +5,25 @@ type Name = string
 type TypeName = string
 type AccessModifier = Public | Private | Internal | Protected
 
-type File = 
+type File =
 | File of FileBody list
-and FileBody = 
+and FileBody =
 | Using of string
 | Namespace of Name * NamespaceBody list
-and NamespaceBody = 
+and NamespaceBody =
 | Interface of Name * AccessModifier * InterfaceBody list
 | Class of Name * AccessModifier * ClassBody list
 | Struct of Name * AccessModifier
 | Enum of Name * AccessModifier * Name list //Should this be Name*int for custom int values?
-and ClassBody = 
+and ClassBody =
 | Field of Name
 | Property of Name
 | Event of Name
-| Method of AccessModifier * TypeName * Name * Parameter list * Expr list 
+| Method of AccessModifier * TypeName * Name * Parameter list * Expr list
 and InterfaceBody =
 | Method of TypeName * Name * Parameter list
 //| Property, Event, yada yada
-and Parameter = 
+and Parameter =
 | Parameter of TypeName * Name
 and Expr =
 | Expr of Expr
@@ -51,7 +51,7 @@ and Expr =
 | While of Expr * Expr
 | DoWhile of Expr * Expr
 | Assign of Expr * Expr
-module AstHelpers = 
+module AstHelpers =
     let toAccessModifier = function
     | "public" -> Public
     | ""

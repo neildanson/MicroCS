@@ -12,28 +12,28 @@ open TypedAst
 
 let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:ParameterBuilder list) = function
     | TConstructor(t, ci, parameters') ->
-        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars 
+        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars
         il.Emit(OpCodes.Newobj, ci) //Todo get params from Parameter Expressions
         vars
     | TInstanceCall(TRef(_,name), methodInfo, parameters') when vars.[name].LocalType.IsValueType ->
-        il.Emit(OpCodes.Ldloca, vars.[name]) 
-        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars 
-        il.EmitCall(OpCodes.Call, methodInfo, null) 
+        il.Emit(OpCodes.Ldloca, vars.[name])
+        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars
+        il.EmitCall(OpCodes.Call, methodInfo, null)
         vars
     | TInstanceCall(expr, methodInfo, parameters') ->
         let vars = eval il vars parameters expr
-        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars 
-        il.EmitCall(OpCodes.Call, methodInfo, null)  
+        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars
+        il.EmitCall(OpCodes.Call, methodInfo, null)
         vars
-    | TStaticCall(methodInfo, parameters') -> 
-        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars 
-        il.EmitCall(OpCodes.Call, methodInfo, null)  
+    | TStaticCall(methodInfo, parameters') ->
+        let vars = parameters'|>List.fold(fun v p -> eval il v parameters p) vars
+        il.EmitCall(OpCodes.Call, methodInfo, null)
         vars
     | TString(s) -> il.Emit(OpCodes.Ldstr,s)
                     vars
     | TInt(i) -> il.Emit(OpCodes.Ldc_I4, i)
                  vars
-    | TBool(b) -> 
+    | TBool(b) ->
         il.Emit(OpCodes.Ldc_I4, if b then 1 else 0)
         vars
     | TRef(_,name) ->
@@ -44,7 +44,7 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         | None, Some(p)  -> il.Emit(OpCodes.Ldarg_S, p.Position)
         | None, None -> failwith "Unknown variable"
         vars
-    | TVar(t, name) -> 
+    | TVar(t, name) ->
         let local = il.DeclareLocal(t)
         local.SetLocalSymInfo(name)
         vars|>Map.add name local
@@ -54,43 +54,43 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
          let vars = eval il vars parameters s'
          il.Emit(OpCodes.Call, typeof<string>.GetMethod("Concat", [| typeof<string>; typeof<string> |]))
          vars
-    | TAdd(expr, expr') -> 
+    | TAdd(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Add)
         vars
-    
-    | TSubtract(expr, expr') -> 
+
+    | TSubtract(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Sub)
         vars
-    | TMultiply(expr, expr') -> 
+    | TMultiply(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Mul)
         vars
-    | TDivide(expr, expr') -> 
+    | TDivide(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Div)
         vars
-    | TModulus(expr, expr') -> 
+    | TModulus(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Rem)
         vars
-    | TEquals(expr, expr') -> 
+    | TEquals(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Ceq)
         vars
-    | TLessThan(expr, expr') -> 
+    | TLessThan(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Clt)
         vars
-    | TGreaterThan(expr, expr') -> 
+    | TGreaterThan(expr, expr') ->
         let vars = eval il vars parameters expr
         let vars = eval il vars parameters expr'
         il.Emit(OpCodes.Cgt)
@@ -109,26 +109,26 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
     | TReturn(expr) ->
         let vars = eval il vars parameters expr
         il.Emit(OpCodes.Ret)
-        vars  
-    | TScope(exprs) -> 
+        vars
+    | TScope(exprs) ->
         il.BeginScope()
-        let vars = exprs|>List.fold(fun v p -> eval il v parameters p) vars 
+        let vars = exprs|>List.fold(fun v p -> eval il v parameters p) vars
         il.EndScope()
         vars
-    | TIf(cond, ifTrue) -> 
+    | TIf(cond, ifTrue) ->
         let label = il.DefineLabel()
         let vars = eval il vars parameters cond
         il.Emit(OpCodes.Brfalse, label)
         let vars = eval il vars parameters ifTrue
         il.MarkLabel(label)
-         
+
         vars
     | TWhile(cond, body) ->
         let startLabel = il.DefineLabel()
         let endLabel = il.DefineLabel()
         il.MarkLabel(startLabel)
         let vars = eval il vars parameters cond
-        //If cond == false goto end       
+        //If cond == false goto end
         il.Emit(OpCodes.Brfalse, endLabel)
         //While body
         let vars = eval il vars parameters body
@@ -139,57 +139,56 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         let startLabel = il.DefineLabel()
         il.MarkLabel(startLabel)
         let vars = eval il vars parameters body
-        
+
         let vars = eval il vars parameters cond
-        //If cond == false goto end       
+        //If cond == false goto end
         //While body
         il.Emit(OpCodes.Brtrue, startLabel)
         vars
-    | TAssign(TVar(type', name), rhs) -> 
+    | TAssign(TVar(type', name), rhs) ->
         let vars = eval il vars parameters (TVar(type',name))
         let local = vars.[name]
         let vars = eval il vars parameters rhs
-        il.Emit(OpCodes.Stloc, local)        
+        il.Emit(OpCodes.Stloc, local)
         vars
-    | TAssign(TRef(type', name), rhs) -> 
+    | TAssign(TRef(type', name), rhs) ->
         let local = vars.[name]
         let vars = eval il vars parameters rhs
-        il.Emit(OpCodes.Stloc, local)        
+        il.Emit(OpCodes.Stloc, local)
         vars
     | x -> failwith "Currently unsupported"
 
-let compileInterface (tb:TypeBuilder) body = 
-    body|>List.iter(fun (TInterfaceBody.TMethod(returnType, name, parameters)) -> 
+let compileInterface (tb:TypeBuilder) body =
+    body|>List.iter(fun (TInterfaceBody.TMethod(returnType, name, parameters)) ->
                     ignore<| match returnType with
-                             | Some(returnType) -> tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual, returnType, 
-                                                                   parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray) 
+                             | Some(returnType) -> tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual, returnType,
+                                                                   parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray)
                              | None ->  tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual))
     tb
 
-let compileMethod (parameters:(Type * Name) list) (mb:MethodBuilder) (exprList:TExpr list) = 
+let compileMethod (parameters:(Type * Name) list) (mb:MethodBuilder) (exprList:TExpr list) =
     let il = mb.GetILGenerator()
     let parameters = parameters |> List.mapi(fun i (t,n) -> mb.DefineParameter(i+1, ParameterAttributes.In, n))
     exprList|>List.fold(fun vars expr -> eval il vars parameters expr) Map.empty |> ignore
     //Woder if I should check if ive already emitted a ret?
     il.Emit(OpCodes.Ret)
 
-let compileClass (tb:TypeBuilder) body = 
-    body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) -> 
+let compileClass (tb:TypeBuilder) body =
+    body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) ->
                         ignore <| compileMethod parameters name body)
     tb
 
 let compileType = function
-    | TInterface(tb, body) -> Some(compileInterface tb body) 
+    | TInterface(tb, body) -> Some(compileInterface tb body)
     | TClass(tb, body) -> Some(compileClass tb body)
     | TStruct(tb) -> Some(tb)
     | TEnum(_) -> None (*enums already compiled*)
 
-let compileFile(TFile(body)) = 
+let compileFile(TFile(body)) =
     body
     |>List.choose(fun b -> compileType b)
     |>List.iter(fun tb -> tb.CreateType() |> ignore)
 
-let compile (ab, ast: TFile) = 
+let compile (ab, ast: TFile) =
     compileFile ast
     ab
-

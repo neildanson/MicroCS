@@ -1,5 +1,5 @@
 ﻿module CSharpSource
-let cSharpProgram = """using System; 
+let cSharpProgram = """using System;
 using System.Net;
 using System.Threading;
 using System.Diagnostics;
@@ -63,7 +63,7 @@ namespace TestNamespace
         string TestComplexCalls()
         {
             WebClient wc = new WebClient();
-            
+
             string result =  wc.DownloadString("http://www.google.com");
             return result;
         }
@@ -196,7 +196,7 @@ namespace TestNamespace
         }
     }
 
-    internal enum TestEnum 
+    internal enum TestEnum
     {
         Value1, Value2, Terminator, Terminator2
     }
