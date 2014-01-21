@@ -55,6 +55,7 @@
       <Visible>false</Visible>
       <Link>Lexer.fs</Link>
     </Compile>
+    <Compile Include="Reflection.fs" />
     <Compile Include="TypedAst.fs" />
     <Compile Include="Compiler.fs" />
     <FsYacc Include="Parser.fsy">
@@ -64,6 +65,10 @@
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
     <Compile Include="CSharpSource.fs" />
+    <Compile Include="Interface.fs" />
+    <Compile Include="Class.fs" />
+    <Compile Include="Enum.fs" />
+    <Compile Include="Assembly.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

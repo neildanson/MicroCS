@@ -12,7 +12,9 @@ open TypedAst
 open Compiler
 open Lexer
 open Parser
+
 open CSharpSource
+open Assembly
 
 let parse input =
     let tokenized = LexBuffer<char>.FromString(input)
@@ -39,12 +41,19 @@ let Compile() =
     sw.Restart()
 
     //Perhaps a new appdomain is in order?
-    references [ "System.Xml"; "System.Core"]
-    cSharpProgram
-    |> parse
-    |> typed "CSharpCompilerExample"
-    |> compile
-    |> save "CSharpCompilerExample.dll"
+    //references [ "System.Xml"; "System.Core"]
+    //cSharpProgram
+    //|> parse
+    //|> typed "CSharpCompilerExample"
+    //|> compile
+    //|> save "CSharpCompilerExample.dll"
+    
+    let ast = parse cSharpProgram
+
+    "CSharpExample.dll"
+    |> CompileFile
+    |> CompileBody ast
+    |> Save
 
     printf "Time to Compile %dms" sw.ElapsedMilliseconds
     Console.ReadLine() |> ignore

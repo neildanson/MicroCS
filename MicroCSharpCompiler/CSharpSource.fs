@@ -12,6 +12,18 @@ namespace TestNamespace
 
     public class TestClass
     {
+        public int TestXXX()
+        {
+            int p = 1;
+            int x = this.PrivateSquare(p);
+            return x;
+        }
+
+        private int PrivateSquare(int x)
+        {
+            return x * x;
+        }
+
         public int TestParameterAdd(int a, int b)
         {
             return a + b;
@@ -202,3 +214,5 @@ namespace TestNamespace
     }
 }
 """
+
+//TODO Arrays, For loops, this method calls, fields, properties, constructors, ||, <=, >=, !=, inheritance
