@@ -19,7 +19,6 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         vars
     | TInstanceCall(TRef(_,name), methodInfo, parameters') when name = "this" ->
         il.Emit(OpCodes.Ldarg_0)
-        //let vars = eval expr vars
         let vars = parameters'|>List.fold(fun v p -> eval p v) vars
         il.EmitCall(OpCodes.Call, methodInfo, null)
         vars

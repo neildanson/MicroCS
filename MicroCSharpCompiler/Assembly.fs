@@ -1,6 +1,7 @@
 ﻿module Assembly
 
 open Ast
+open Definitions
 open Class
 open Interface
 open Enum
@@ -72,11 +73,9 @@ let CompileBody (File(body)) (ab, mb:ModuleBuilder, filename) =
     let enums = body |> List.map (fun (_,e,_) -> e) |> List.collect id
     let interfaces = body |> List.map (fun (_,_,i) -> i) |> List.collect id
     
-    //
-    // Not shipping
-    //
-    let ResolveType name = ResolveType usings (classes, interfaces, enums) name
-    let x = ResolveType "int"
+    let (userdefinitions:UserDefinitions) = classes, interfaces, [], enums
+
+    let ResolveType name = ResolveType usings userdefinitions name
     
     //Methods
     let classes = classes 
@@ -87,8 +86,9 @@ let CompileBody (File(body)) (ab, mb:ModuleBuilder, filename) =
                                                              WithMethod c access returntype name parameters ResolveType body
                                                         | _ -> failwith "Unsupported") c
                                                              )
+    let userdefinitions = classes, interfaces, [], enums
 
-    classes|>List.iter(fun c -> c.Methods |> List.iter(fun (_,_,b) -> b classes))
+    classes|>List.iter(fun c -> c.Methods |> List.iter(fun (_,_,b) -> b userdefinitions))
     //Compile bodies
     classes|> List.map(fun t -> t.Type.CreateType()) |> ignore
     enums|> List.map(fun e -> e.CreateType()) |> ignore

@@ -65,6 +65,7 @@
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
     <Compile Include="CSharpSource.fs" />
+    <Compile Include="Definitions.fs" />
     <Compile Include="Interface.fs" />
     <Compile Include="Class.fs" />
     <Compile Include="Enum.fs" />

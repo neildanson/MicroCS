@@ -1,5 +1,6 @@
 ﻿module Enum
 
+open Definitions
 open Reflection
 
 open System.Reflection
@@ -16,6 +17,6 @@ let (|BuildEnum|_|) (namespaceName, body, moduleBuilder) =
     | Ast.Enum(name, access, values) -> Some(buildEnum moduleBuilder namespaceName name access values)
     | _ -> None
 
-let (|GetEnum|_|) (userdefinitions,name) =
-    let _, _, enums = userdefinitions
+let (|GetEnum|_|) (userdefinitions:UserDefinitions,name) =
+    let _,_,_,enums = userdefinitions
     enums|>List.tryFind(fun (eb:EnumBuilder) -> eb.Name = name)

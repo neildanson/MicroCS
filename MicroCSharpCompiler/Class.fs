@@ -1,6 +1,7 @@
 ﻿module Class
 
 open Ast
+open Definitions
 open TypedAst //Hopefully remove this using and move the methods in here to elsewhere
 open Reflection
 
@@ -9,16 +10,6 @@ open System.Linq
 open System.Reflection
 open System.Reflection.Emit
 
-type MethodSignature = Type array
-
-type ClassDefinition = {
-    Type : TypeBuilder
-    Constructors : ConstructorBuilder list
-    Fields : FieldBuilder list
-    Properties : PropertyBuilder list
-    Methods : (MethodBuilder * MethodSignature * (ClassDefinition list -> unit)) list //maybe need to move this definition so that we can reference other definitions
-    Ast : ClassBody list
-}
 
 let emptyClass typeBuilder ast = { Type = typeBuilder; Constructors = []; Fields = []; Properties = []; Methods = []; Ast = ast }
  
@@ -32,35 +23,35 @@ let (|BuildClass|_|) (namespaceName, body, moduleBuilder) =
     | _ -> None
 
 
-let (|GetClass|_|) (userdefinitions, name) =
-    let classes, _, _ = userdefinitions
+let (|GetClass|_|) (userdefinitions:UserDefinitions, name) =
+    let classes,_,_,_ = userdefinitions
     classes|>List.tryFind(fun (cd:ClassDefinition) -> cd.Type.Name = name || cd.Type.FullName = name)
     
-let GetConstructor userdefined (t:Type, parameters)  = 
+let GetConstructor (userdefined:UserDefinitions) (t:Type, parameters)  = 
     match t with
-    | :? TypeBuilder as t-> let classes = userdefined
+    | :? TypeBuilder as t-> let classes,_,_,_ = userdefined
                             let classDef = classes |> List.find(fun c -> c.Type = t)
                             let builder = classDef.Constructors
                                           |>List.find(fun c -> c.GetParameters() |> Array.map(fun (p:ParameterInfo) -> p.ParameterType) = parameters)
                             builder :> ConstructorInfo
-    | :? System.Type as t -> t.GetConstructor(parameters)
+    |  t -> t.GetConstructor(parameters)
 
-let GetMethod userdefined (name, t:Type, parameters)  = 
+let GetMethod (userdefined:UserDefinitions) (name, t:Type, parameters)  = 
     match t with
-    | :? TypeBuilder as t-> let classes = userdefined
+    | :? TypeBuilder as t-> let classes,_,_,_ = userdefined
                             let classDef = classes |> List.find(fun c -> c.Type = t)
                             let builder,_,_ = classDef.Methods
                                               |>List.find(fun (m,s, _) -> m.Name = name && Enumerable.SequenceEqual(s,parameters))
                             builder :> MethodInfo
-    | :? System.Type as t -> t.GetMethod(name, parameters)
+    | t -> t.GetMethod(name, parameters)
 
 
 
-let WithField classDef returnType name resolveType =
+let WithField (classDef:ClassDefinition) returnType name resolveType =
     let field = classDef.Type.DefineField(name, resolveType returnType, FieldAttributes.Private) //TODO Attributes
     { classDef with Fields = [field]@classDef.Fields }
 
-let WithMethod classDef access returnType name parameters resolveType body = 
+let WithMethod (classDef:ClassDefinition) access returnType name parameters resolveType body = 
     let parameters = parameters |> List.map(fun (Parameter(typename, name)) -> resolveType typename, name) 
     let method' = classDef.Type.DefineMethod(name, 
                                              accessModifierToMethodAttribute access, 
