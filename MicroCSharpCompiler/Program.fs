@@ -32,8 +32,6 @@ let parse input =
         System.Console.ReadLine() |> ignore
         exit 1
 
-let save name (ass: Emit.AssemblyBuilder) = ass.Save(name)
-
 let references refs = refs |> List.iter(fun s -> Assembly.LoadWithPartialName s |> ignore)
 
 let Compile() =
@@ -41,18 +39,12 @@ let Compile() =
     sw.Restart()
 
     //Perhaps a new appdomain is in order?
-    //references [ "System.Xml"; "System.Core"]
-    //cSharpProgram
-    //|> parse
-    //|> typed "CSharpCompilerExample"
-    //|> compile
-    //|> save "CSharpCompilerExample.dll"
-    
     let ast = parse cSharpProgram
 
     "CSharpExample.dll"
     |> CompileFile
     |> CompileBody ast
+    |> Finish
     |> Save
 
     printf "Time to Compile %dms" sw.ElapsedMilliseconds

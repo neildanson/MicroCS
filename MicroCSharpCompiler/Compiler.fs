@@ -7,9 +7,6 @@ open System.Reflection.Emit
 open Ast
 open TypedAst
 
-//Things to consider:
-//EnumBuilder and TypeBuilder both need to CreateType, but method defined seperately
-
 let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:ParameterBuilder list) expr =
     let eval expr vars = eval il vars parameters expr 
     match expr with

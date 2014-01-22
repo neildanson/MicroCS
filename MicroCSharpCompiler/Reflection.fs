@@ -1,5 +1,6 @@
 ﻿module Reflection
 
+open Ast
 open System.Reflection
 
 let accessModifierToTypeAttribute = function
