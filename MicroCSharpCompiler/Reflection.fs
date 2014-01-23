@@ -14,15 +14,3 @@ let accessModifierToMethodAttribute = function
     | Private -> MethodAttributes.Private
     | Internal -> MethodAttributes.Assembly
     | Protected -> MethodAttributes.Family
-
-let resolveTypeIntegral name =
-    match name with
-    | "void" -> typeof<System.Void> |> Some
-    | "int" -> typeof<int> |> Some
-    | "float" -> typeof<float32> |> Some
-    | "double" -> typeof<float> |> Some
-    | "string" -> typeof<string> |> Some
-    | "bool" -> typeof<bool> |> Some
-    | "decimal" -> typeof<decimal> |> Some
-    | "object" -> typeof<obj> |> Some
-    | _ -> None //TODO other integral types

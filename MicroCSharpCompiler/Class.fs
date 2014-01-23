@@ -2,7 +2,7 @@
 
 open Ast
 open Definitions
-open TypedAst //Hopefully remove this using and move the methods in here to elsewhere
+open TypedAst
 open Reflection
 
 open System
@@ -32,7 +32,9 @@ let GetConstructor (userdefined:UserDefinitions) (t:Type, parameters)  =
     | :? TypeBuilder as t-> let classes,_,_,_ = userdefined
                             let classDef = classes |> List.find(fun c -> c.Type = t)
                             let builder = classDef.Constructors
-                                          |>List.find(fun c -> c.GetParameters() |> Array.map(fun (p:ParameterInfo) -> p.ParameterType) = parameters)
+                                          |>List.find(fun c -> 
+                                                c.GetParameters() 
+                                                |> Array.map(fun (p:ParameterInfo) -> p.ParameterType) = parameters)
                             builder :> ConstructorInfo
     |  t -> t.GetConstructor(parameters)
 
@@ -57,13 +59,13 @@ let WithMethod (classDef:ClassDefinition) access returnType name parameters reso
                                              accessModifierToMethodAttribute access, 
                                              resolveType returnType, 
                                              parameters|>List.map fst |> List.toArray)
-    let buildBody userdefined = 
+    let buildMethodBody userdefined = 
         let variables = System.Collections.Generic.Dictionary<_,_>()
         let typed = body|> List.map(fun b -> toTypedExpr resolveType variables parameters classDef.Type (GetConstructor userdefined) (GetMethod userdefined) b)
         let il = method'.GetILGenerator()
-        let parameters = parameters |> List.mapi(fun i (t,n) -> method'.DefineParameter(i+1, ParameterAttributes.In, n))
+        let parameters = parameters |> List.mapi(fun i (t,n) -> method'.DefineParameter(i+1, ParameterAttributes.None, n))
         typed|>List.fold(fun vars expr -> Compiler.eval il vars parameters expr) Map.empty |> ignore
-        //Woder if I should check if ive already emitted a ret?
+        //Wonder if I should check if ive already emitted a ret?
         il.Emit(OpCodes.Ret)
 
-    { classDef with Methods = [method', parameters |> List.map fst |> List.toArray, buildBody]@classDef.Methods }
+    { classDef with Methods = [method', parameters |> List.map fst |> List.toArray, buildMethodBody]@classDef.Methods }

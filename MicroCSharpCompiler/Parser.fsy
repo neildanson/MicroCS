@@ -128,6 +128,7 @@ EnumBody:
 ParameterExprList:
 	|							{ [] }
 	| Expr						{ [$1] }
+	| Expr COMMA				{ [$1] }
 	| Expr ParameterExprList	{ $1 :: $2 }
 
 //ParameterBodyList for defining parameters as type-name pairs

@@ -1,5 +1,11 @@
 ﻿module CSharpSource
-let cSharpProgram = """using System;
+
+// An example c# prograsm to identify some of the capabilities of the compiler
+// done - while loops, if statements, local variables, instance calls (including this), static calls, arithmatic
+// still todo - for loops, ifthenelse,  <=, >=, !=, switch, labels, inheritance, fields, properties
+
+let cSharpProgram = """
+using System;
 using System.Net;
 using System.Threading;
 using System.Diagnostics;
@@ -12,153 +18,6 @@ namespace TestNamespace
 
     public class TestClass
     {
-        public int TestXXX()
-        {
-            int p = 1;
-            int x = this.PrivateSquare(p);
-            return x;
-        }
-
-        private int PrivateSquare(int x)
-        {
-            return x * x;
-        }
-
-        public int TestParameterAdd(int a, int b)
-        {
-            return a + b;
-        }
-
-        object TestReturningNewObject1()
-        {
-            object o = new object();
-            return o;
-        }
-
-        object TestReturningNewObject2()
-        {
-            return new object();
-        }
-
-        bool TestReturningTrue()
-        {
-            return true;
-        }
-
-        bool TestReturingFalse()
-        {
-            return false;
-        }
-
-        string TestStringAddition()
-        {
-            string x = "foo" + "bar";
-            return x;
-        }
-
-        int TestIntAddition()
-        {
-            return 14 + 3;
-        }
-
-        void TestStaticCall()
-        {
-            Debug.WriteLine("xxx");
-        }
-
-        string TestInstanceCall()
-        {
-            string s = "Hello";
-            return s.ToLower();
-        }
-
-        string TestComplexCalls()
-        {
-            WebClient wc = new WebClient();
-
-            string result =  wc.DownloadString("http://www.google.com");
-            return result;
-        }
-
-        public void TestInferMethodReturnType()
-        {
-            string s = Convert.ToString(47);
-            Debug.WriteLine(s);
-        }
-
-        public void TestWhile()
-        {
-            int i = 0;
-            while ( i < 100)
-            {
-                i = i + 1;
-                Console.WriteLine(i.ToString());
-            }
-        }
-
-        public void TestWhile2()
-        {
-            int i = 100;
-            while ( i > 0)
-            {
-                i = i - 1;
-                Console.WriteLine(i.ToString());
-            }
-        }
-
-        public Random NonDefaultConstructor()
-        {
-            Random r = new Random(100);
-            return r;
-        }
-
-        public bool DoSomething2()
-        {
-            string xxx = "foo" + "bar";
-            int x = 1;
-            int y = 2;
-            string yyy = x.ToString() + y.ToString();
-            bool b = true;
-            Console.WriteLine(xxx);
-            Debug.WriteLine(yyy);
-            return b;
-        }
-
-        public bool TestEquality()
-        {
-            return 1 == 2;
-        }
-
-        public void TestScoping()
-        {
-            int i = 48;
-            {
-                int j = 64;
-                Console.WriteLine(j.ToString());
-            }
-            Console.WriteLine(i.ToString());
-        }
-
-        public bool TestIf()
-        {
-            Random r = new Random();
-            int next = r.Next();
-            if (next == 4) return true;
-            return false;
-        }
-
-        public void TestDoWhile()
-        {
-            int i = 50;
-            do
-            {
-                Console.WriteLine("Foo");
-                Thread.Sleep(100);
-                i = i - 1;
-            }
-            while (i > 0);
-        }
-
         public void Fibonacci(int count)
         {
             int n = 0;
@@ -179,16 +38,6 @@ namespace TestNamespace
             }
         }
 
-        public void TestModulus()
-        {
-            int x = 3 % 1;
-        }
-
-        public bool And(bool t, bool f)
-        {
-            return t && f;
-        }
-
         public void FizzBuzz(int max)
         {
             int i = 1;
@@ -206,6 +55,7 @@ namespace TestNamespace
                 i = i + 1;
             }
         }
+
     }
 
     internal enum TestEnum

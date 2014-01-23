@@ -5,42 +5,13 @@ open Definitions
 open Class
 open Interface
 open Enum
-
 open Reflection
+open TypeResolver
 
 open System
 open System.Reflection
 open System.Reflection.Emit
 
-let GetTypeFromLoadedAssemblies usings name =
-    let t = Type.GetType name
-    match t with
-    | null ->
-        let usings = usings |>List.rev //We reverse the order as the last defined takes greatest precedence
-        let possibleTypeNames = usings |> List.map(fun using -> using + "." + name)
-        let loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies()
-
-        let possibleFullyQualifiedTypes =
-            possibleTypeNames
-            |> List.collect (fun t -> loadedAssemblies |> Seq.map(fun a -> t + "," + a.FullName) |> Seq.toList)
-            |> List.map(fun tn -> Type.GetType(tn))
-            |> List.filter(fun t -> t <> null)
-        match possibleFullyQualifiedTypes with
-        | head::_ -> head
-        | _ -> null
-
-    | t -> t
-
-
-let ResolveType usings userdefinition name= 
-    match resolveTypeIntegral name with
-    | Some(t) -> t
-    | None ->
-        match userdefinition, name with
-        | GetClass(cd) -> cd.Type :> Type
-        | GetEnum(eb) -> eb :> Type
-        | _ -> let t = GetTypeFromLoadedAssemblies usings name
-               if t <> null then t else failwith "Unknown Type"
 
 let CompileFile filename = 
     IO.File.Delete (filename + ".dll")
@@ -70,21 +41,23 @@ let CompileBody (File(body)) (ab, mb:ModuleBuilder, filename) =
     let definitions = body |> List.map(function Namespace(name, body) -> Some(name, body) | _ -> None) |> List.choose id
     let body = definitions |> List.map(fun (name, bodies) -> CompileNamespaceBody name bodies mb) 
     let classes = body |> List.map (fun (t,_,_,_) -> t) |> List.collect id
+    let interfaces = body |> List.map (fun (_,i,_,_) -> i) |> List.collect id
     let enums = body |> List.map (fun (_,_,_,e) -> e) |> List.collect id
-    let interfaces = body |> List.map (fun (_,_,i,_) -> i) |> List.collect id
     
     let (userdefinitions:UserDefinitions) = classes, interfaces, [], enums
 
     let ResolveType name = ResolveType usings userdefinitions name
     
     //Methods - TODO - this code is fugly
+    let buildClassContent classDef  = function
+        | ClassBody.Method(access, returntype, name, parameters, body) ->
+            WithMethod classDef access returntype name parameters ResolveType body
+        | _ -> failwith "Unsupported"    
+                                                        
+
     let classes = classes 
-                  |> List.map(fun c -> c.Ast 
-                                       |> List.fold(fun c body ->
-                                                        match body with
-                                                        | ClassBody.Method(access, returntype, name, parameters, body) ->
-                                                             WithMethod c access returntype name parameters ResolveType body
-                                                        | _ -> failwith "Unsupported") c
+                  |> List.map(fun classDef -> classDef.Ast 
+                                              |> List.fold(fun classDef body -> buildClassContent classDef body) classDef
                                                              )
     let userdefinitions = classes, interfaces, [], enums
 
