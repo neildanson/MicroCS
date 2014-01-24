@@ -20,6 +20,7 @@ and InterfaceDefinition = {
     Type : TypeBuilder
     Properties : PropertyBuilder list
     Methods : MethodBuilder list
+    Ast : InterfaceBody list
 }
 and StructDefinition = { 
     Type : TypeBuilder

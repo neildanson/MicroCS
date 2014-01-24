@@ -1,8 +1,8 @@
 ﻿module CSharpSource
 
 // An example c# prograsm to identify some of the capabilities of the compiler
-// done - while loops, if statements, local variables, instance calls (including this), static calls, basic arithmatic, for loops
-// still todo - ifthenelse,  <=, >=, !=, switch, labels, inheritance, fields, properties
+// done - while loops, if statements, local variables, instance calls (including this), static calls, basic arithmatic, for loops, read/write fields
+// still todo - ifthenelse,  <=, >=, !=, switch, labels, inheritance,  properties
 
 let cSharpProgram = """
 using System;

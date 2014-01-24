@@ -9,6 +9,7 @@ namespace CompilerOutputTestApp
 {
     class Program
     {
+        int i = 57;
         public void FizzBuzz(int max)
         {
             for (int i = 0; i < max; i = i + 1)

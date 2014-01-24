@@ -53,16 +53,22 @@ let CompileBody (File(body)) (ab, mb:ModuleBuilder, filename) =
     //Methods - TODO - this code is fugly
     let buildClassContent classDef  = function
         | ClassBody.Method(access, returntype, name, parameters, body) ->
-            WithMethod classDef access returntype name parameters ResolveType body
+            Class.WithMethod classDef access returntype name parameters ResolveType body
         | ClassBody.Field(access, fieldtype, name) -> 
             WithField classDef access fieldtype name ResolveType
         | _ -> failwith "Unsupported"    
-                                                        
+    
+    let buildInterfaceContent interfaceDef  = function
+        | InterfaceBody.Method(returntype, name, parameters) ->
+            Interface.WithMethod interfaceDef returntype name parameters ResolveType
+        | _ -> failwith "Unsupported"                                                       
 
     let classes = classes 
                   |> List.map(fun classDef -> classDef.Ast 
-                                              |> List.fold(fun classDef body -> buildClassContent classDef body) classDef
-                                                             )
+                                              |> List.fold(fun classDef body -> buildClassContent classDef body) classDef)
+    let interfaces = interfaces|> List.map(fun classDef -> classDef.Ast 
+                                                           |> List.fold(fun classDef body -> buildInterfaceContent classDef body) classDef)
+
     let userdefinitions = classes, interfaces, [], enums
 
     classes|>List.iter(fun c -> c.Methods |> List.iter(fun (_,_,b) -> b userdefinitions))
