@@ -22,6 +22,7 @@ namespace TestNamespace
         
         public int GetField()
         {
+            field = field + 1;
             return field;
         }
         

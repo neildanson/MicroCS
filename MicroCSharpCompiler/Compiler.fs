@@ -169,10 +169,20 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         il.Emit(OpCodes.Stloc, local)
         vars
     | TAssign(TRef(type', name), rhs) ->
-        let local = vars.[name]
-        let vars = eval rhs vars
-        il.Emit(OpCodes.Stloc, local)
-        vars
+        let local = vars.TryFind name
+        let field = fields  |>List.tryFind(fun f -> f.Name = name)
+        
+        match local, field with
+        | Some(local),_ ->
+            let vars = eval rhs vars
+            il.Emit(OpCodes.Stloc, local)
+            vars
+        | None, Some(field) -> 
+            il.Emit(OpCodes.Ldarg_0)
+            let vars = eval rhs vars
+            il.Emit(OpCodes.Stfld, field)
+            vars
+        | _ -> failwith "No local or field found"
     | x -> failwith "Currently unsupported"
 
 (*
