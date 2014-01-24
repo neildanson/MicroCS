@@ -91,6 +91,7 @@ ExprList:
 
 Expr:
 	| Expr SEMICOLON					{ Expr($1) }
+	| Expr COMMA						{ Expr($1) } //This really shouldnt be here
 	| LPAREN Expr RPAREN				{ $2 }
 	| LCURLY ExprList RCURLY			{ Scope($2) }
 	| NEW NAME LPAREN ParameterExprList RPAREN { Constructor($2, $4) }
@@ -128,7 +129,6 @@ EnumBody:
 ParameterExprList:
 	|							{ [] }
 	| Expr						{ [$1] }
-	| Expr COMMA				{ [$1] }
 	| Expr ParameterExprList	{ $1 :: $2 }
 
 //ParameterBodyList for defining parameters as type-name pairs

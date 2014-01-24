@@ -18,6 +18,16 @@ namespace TestNamespace
 
     public class TestClass
     {
+        private int Add(int x, int y)
+        {
+            return x + y;
+        }
+
+        public int PublicAdd()
+        {
+            return this.Add(3,4);
+        }
+
         public void Fibonacci(int count)
         {
             int n = 0;
