@@ -34,6 +34,7 @@ type TExpr =
 | TIf of TExpr * TExpr
 | TWhile of TExpr * TExpr
 | TDoWhile of TExpr * TExpr
+| TFor of TExpr * TExpr * TExpr * TExpr
 | TReturn of TExpr
 | TAssign of TExpr * TExpr
 
@@ -63,6 +64,7 @@ let rec getType = function
 | TDoWhile(_,_) -> None
 | TAssign(_,_) -> None
 | TIf(_, ifTrue) -> getType ifTrue //Note return types from if must match from both sides
+| TFor(_) -> None
 
 let rec toTypedExpr resolveType (variables:Dictionary<_,_>) (parameters:(_ * _) list) (typeBuilder:TypeBuilder) getConstructor getMethod expr=
      let toTyped expr = toTypedExpr resolveType variables parameters typeBuilder getConstructor getMethod expr
@@ -137,6 +139,7 @@ let rec toTypedExpr resolveType (variables:Dictionary<_,_>) (parameters:(_ * _) 
      | If(cond, ifTrue) -> TIf(toTyped cond, toTyped ifTrue)
      | While(cond, body) -> TWhile(toTyped cond, toTyped body)
      | DoWhile(body, cond) -> TDoWhile(toTyped body, toTyped cond)
+     | For(expr1, expr2, expr3, body) -> TFor(toTyped expr1, toTyped expr2, toTyped expr3, toTyped body)
      | Assign(lhs, rhs) ->
         TAssign(toTyped lhs, toTyped rhs)
 

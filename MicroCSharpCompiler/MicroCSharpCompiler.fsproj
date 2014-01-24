@@ -9,11 +9,11 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Language</RootNamespace>
     <AssemblyName>MicroCSharpCompiler</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <Name>MicroCSharpCompiler</Name>
-    <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
+    <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
     <FsYaccToolPath>..\packages\FSPowerPack.Community.3.0.0.0\Tools</FsYaccToolPath>
     <FsLexToolPath>..\packages\FSPowerPack.Community.3.0.0.0\Tools</FsLexToolPath>
     <FsLexUnicode>true</FsLexUnicode>

@@ -49,6 +49,7 @@ and Expr =
 | If of Expr * Expr
 | Return of Expr
 | While of Expr * Expr
+| For of Expr * Expr * Expr * Expr
 | DoWhile of Expr * Expr
 | Assign of Expr * Expr
 module AstHelpers =

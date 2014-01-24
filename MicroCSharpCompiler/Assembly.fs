@@ -13,11 +13,13 @@ open System.Reflection
 open System.Reflection.Emit
 
 
-let CompileFile filename = 
-    IO.File.Delete (filename + ".dll")
-    let aName = AssemblyName(filename)
+let CompileFile name = 
+    let filename = name + ".dll"
+    IO.File.Delete (filename)
+    let aName = AssemblyName(name)
+
     let ab = AppDomain.CurrentDomain.DefineDynamicAssembly(aName, AssemblyBuilderAccess.RunAndSave)
-    let mb = ab.DefineDynamicModule(aName.Name, aName.Name, true) //true means debug it seems
+    let mb = ab.DefineDynamicModule(aName.Name, filename, true) //true means debug it seems
     ab,  mb, filename
 
 let CompileNamespaceBody name types mb = 

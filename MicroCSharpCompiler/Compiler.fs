@@ -149,6 +149,15 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
         //While body
         il.Emit(OpCodes.Brtrue, startLabel)
         vars
+    | TFor(expr1, expr2, expr3, body) ->
+        let vars = eval expr1 vars 
+        let startLabel = il.DefineLabel()
+        il.MarkLabel(startLabel)
+        let vars = eval expr2 vars
+        let vars = eval body vars
+        let vars = eval expr3 vars
+        il.Emit(OpCodes.Brtrue, startLabel)
+        vars
     | TAssign(TVar(type', name), rhs) ->
         let vars = eval (TVar(type',name)) vars 
         let local = vars.[name]

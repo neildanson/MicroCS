@@ -50,6 +50,7 @@ rule tokenize = parse
 | "return"		{ RETURN }
 | "while"		{ WHILE }
 | "do"			{ DO }
+| "for"         { FOR }
 | "//"			{ COMMENT }
 | "if"			{ IF }
 

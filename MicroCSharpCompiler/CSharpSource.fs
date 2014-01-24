@@ -18,16 +18,6 @@ namespace TestNamespace
 
     public class TestClass
     {
-        private int Add(int x, int y)
-        {
-            return x + y;
-        }
-
-        public int PublicAdd()
-        {
-            return this.Add(3,4);
-        }
-
         public void Fibonacci(int count)
         {
             int n = 0;
@@ -50,8 +40,7 @@ namespace TestNamespace
 
         public void FizzBuzz(int max)
         {
-            int i = 1;
-            while (i < max)
+            for (int i = 1; i < max; i = i + 1)
             {
                 int rem5 = i % 5;
                 int rem3 = i % 3;
@@ -62,7 +51,6 @@ namespace TestNamespace
                 if ((rem5 > 0) && (rem3 > 0))
                     Console.Write(i);
                 Console.WriteLine();
-                i = i + 1;
             }
         }
 

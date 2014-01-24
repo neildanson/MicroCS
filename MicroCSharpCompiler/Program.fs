@@ -41,7 +41,7 @@ let Compile() =
     //Perhaps a new appdomain is in order?
     let ast = parse cSharpProgram
 
-    "CSharpExample.dll"
+    "CSharpExample"
     |> CompileFile
     |> CompileBody ast
     |> Finish
