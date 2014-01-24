@@ -53,6 +53,7 @@ rule tokenize = parse
 | "for"         { FOR }
 | "//"			{ COMMENT }
 | "if"			{ IF }
+| "else"		{ ELSE }
 
 
 | ("true"|"false")								{ BOOL (Boolean.Parse(lexeme lexbuf)) }

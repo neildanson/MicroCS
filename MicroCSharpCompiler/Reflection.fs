@@ -14,3 +14,9 @@ let accessModifierToMethodAttribute = function
     | Private -> MethodAttributes.Private
     | Internal -> MethodAttributes.Assembly
     | Protected -> MethodAttributes.Family
+
+let accessModifierToFieldAttribute = function
+    | Public -> FieldAttributes.Public
+    | Private -> FieldAttributes.Private
+    | Internal -> FieldAttributes.Assembly
+    | Protected -> FieldAttributes.Family

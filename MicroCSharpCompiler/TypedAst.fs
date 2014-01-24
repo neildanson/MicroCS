@@ -66,8 +66,8 @@ let rec getType = function
 | TIf(_, ifTrue) -> getType ifTrue //Note return types from if must match from both sides
 | TFor(_) -> None
 
-let rec toTypedExpr resolveType (variables:Dictionary<_,_>) (parameters:(_ * _) list) (typeBuilder:TypeBuilder) getConstructor getMethod expr=
-     let toTyped expr = toTypedExpr resolveType variables parameters typeBuilder getConstructor getMethod expr
+let rec toTypedExpr resolveType (variables:Dictionary<_,_>) (parameters:(_ * _) list) (typeBuilder:TypeBuilder) getConstructor getMethod (getField:_*_->FieldInfo) expr=
+     let toTyped expr = toTypedExpr resolveType variables parameters typeBuilder getConstructor getMethod getField expr
      match expr with
      | Expr(expr) -> toTyped expr
      | Var(typeName, name) ->
@@ -83,7 +83,8 @@ let rec toTypedExpr resolveType (variables:Dictionary<_,_>) (parameters:(_ * _) 
         match var, param with
         | Some(v), _ -> TRef(v, name)
         | None, Some(v,n) -> TRef(v, name)
-        | _ -> failwith "Unsupported"
+        | _ -> let field = getField (name ,typeBuilder)
+               TRef(field.FieldType,field.Name)
      | String(s) -> TString(s)
      | Int(i) -> TInt(i)
      | Float(f) -> TFloat(f)
@@ -159,21 +160,4 @@ let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings
         let methods = body |> List.choose(fun b -> match (b, usings) with INTERFACEMETHOD(m) -> Some(m) | _ -> None)
         Some(definedType, methods)
     | _ -> None
-
-//Rule break here - I just compile the Enums here - no point doing a 2 pass I think - maybe I'll change my mind later
-let (|ENUM|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
-    match body with
-    | Enum(name, visibility, values) ->
-        let eb = mb.DefineEnum(namespaceName+"."+name, accessModifierToTypeAttribute visibility, typeof<int>)
-        values|>List.mapi(fun i n -> eb.DefineLiteral(n,i))|>ignore
-        Some(eb.CreateType())
-    | _ -> None
-
-let compileType mb namespaceBody namespaceName usings =
-    match (mb, namespaceBody, namespaceName, usings) with
-    | CLASS(tb) -> Some(TClass(tb))
-    | INTERFACE(tb, body) -> Some(TInterface(tb, body))
-    | ENUM(tb) -> Some(TEnum(tb))
-    | _ -> failwith "Unrecognized Namespace Body"
-
-*)
+    *)

@@ -11,7 +11,7 @@ type UserDefinitions = ClassDefinition list * InterfaceDefinition list * StructD
 and ClassDefinition = {
     Type : TypeBuilder
     Constructors : ConstructorBuilder list
-    Fields : FieldBuilder list
+    Fields : FieldInfo list
     Properties : PropertyBuilder list
     Methods : (MethodBuilder * MethodSignature * (UserDefinitions -> unit)) list 
     Ast : ClassBody list

@@ -1,8 +1,8 @@
 ﻿module CSharpSource
 
 // An example c# prograsm to identify some of the capabilities of the compiler
-// done - while loops, if statements, local variables, instance calls (including this), static calls, arithmatic
-// still todo - for loops, ifthenelse,  <=, >=, !=, switch, labels, inheritance, fields, properties
+// done - while loops, if statements, local variables, instance calls (including this), static calls, basic arithmatic, for loops
+// still todo - ifthenelse,  <=, >=, !=, switch, labels, inheritance, fields, properties
 
 let cSharpProgram = """
 using System;
@@ -18,6 +18,13 @@ namespace TestNamespace
 
     public class TestClass
     {
+        int field;
+        
+        public int GetField()
+        {
+            return field;
+        }
+        
         public void Fibonacci(int count)
         {
             int n = 0;
@@ -34,7 +41,7 @@ namespace TestNamespace
                     i = i + 1;
                 }
                 n = n + 1;
-                Console.WriteLine(a.ToString())
+                Console.WriteLine(a.ToString());
             }
         }
 
@@ -53,7 +60,6 @@ namespace TestNamespace
                 Console.WriteLine();
             }
         }
-
     }
 
     internal enum TestEnum

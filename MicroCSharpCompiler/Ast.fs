@@ -16,7 +16,7 @@ and NamespaceBody =
 | Struct of Name * AccessModifier
 | Enum of Name * AccessModifier * Name list //Should this be Name*int for custom int values?
 and ClassBody =
-| Field of Name
+| Field of AccessModifier * TypeName * Name
 | Property of Name
 | Event of Name
 | Method of AccessModifier * TypeName * Name * Parameter list * Expr list

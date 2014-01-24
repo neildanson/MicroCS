@@ -81,9 +81,9 @@ ClassBodyList:
 	| ClassBody ClassBodyList	{ $1 :: $2 }
 
 ClassBody:
-	| NAME NAME LPAREN ParameterBodyList RPAREN LCURLY ExprList RCURLY		{ ClassBody.Method(AccessModifier.Private, $1, $2, $4, $7) } 
+	| NAME NAME LPAREN ParameterBodyList RPAREN LCURLY ExprList RCURLY						{ ClassBody.Method(AccessModifier.Private, $1, $2, $4, $7) } 
 	| ACCESSMODIFIER NAME NAME LPAREN ParameterBodyList RPAREN LCURLY ExprList RCURLY		{ ClassBody.Method(AstHelpers.toAccessModifier($1), $2, $3, $5, $8) } 
-
+	| NAME NAME SEMICOLON																	{ ClassBody.Field(AccessModifier.Private, $1, $2)}
 ExprList:
 	|					{ [] }
 	| Expr				{ [$1] }

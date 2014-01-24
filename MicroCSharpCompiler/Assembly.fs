@@ -54,6 +54,8 @@ let CompileBody (File(body)) (ab, mb:ModuleBuilder, filename) =
     let buildClassContent classDef  = function
         | ClassBody.Method(access, returntype, name, parameters, body) ->
             WithMethod classDef access returntype name parameters ResolveType body
+        | ClassBody.Field(access, fieldtype, name) -> 
+            WithField classDef access fieldtype name ResolveType
         | _ -> failwith "Unsupported"    
                                                         
 

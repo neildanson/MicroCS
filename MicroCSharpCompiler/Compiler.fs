@@ -7,8 +7,8 @@ open System.Reflection.Emit
 open Ast
 open TypedAst
 
-let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:ParameterBuilder list) expr =
-    let eval expr vars = eval il vars parameters expr 
+let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:ParameterBuilder list) (fields:FieldInfo list) expr =
+    let eval expr vars = eval il vars parameters fields expr 
     match expr with
     | TConstructor(t, ci, parameters') ->
         let vars = parameters'|>List.fold(fun v p -> eval p v) vars
@@ -43,10 +43,14 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
     | TRef(_,name) ->
         let var = vars|> Map.tryFind name
         let param = parameters |>List.tryFind(fun p -> p.Name = name)
-        match var, param with
-        | Some(v), _ -> il.Emit(OpCodes.Ldloc, v)
-        | None, Some(p)  -> il.Emit(OpCodes.Ldarg_S, p.Position)
-        | None, None -> failwith "Unknown variable"
+        let field = fields  |>List.tryFind(fun f -> f.Name = name)
+        match var, param, field with
+        | Some(v), _, _ -> il.Emit(OpCodes.Ldloc, v)
+        | None, Some(p), _  -> il.Emit(OpCodes.Ldarg_S, p.Position)
+        | None, None, Some(f) -> 
+            il.Emit(OpCodes.Ldarg_0)
+            il.Emit(OpCodes.Ldfld, f)
+        | None, None, None -> failwith "Unknown variable"
         vars
     | TVar(t, name) ->
         let local = il.DeclareLocal(t)
