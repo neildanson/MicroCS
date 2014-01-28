@@ -184,29 +184,3 @@ let rec eval (il:ILGenerator) (vars:Map<string,LocalBuilder>) (parameters:Parame
             vars
         | _ -> failwith "No local or field found"
     | x -> failwith "Currently unsupported"
-
-(*
-let compileInterface (tb:TypeBuilder) body =
-    body|>List.iter(fun (TInterfaceBody.TMethod(returnType, name, parameters)) ->
-                    ignore<| match returnType with
-                             | Some(returnType) -> tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual, returnType,
-                                                                   parameters|>List.map(fun (returnType, name) -> returnType)|>List.toArray)
-                             | None ->  tb.DefineMethod(name, MethodAttributes.Abstract ||| MethodAttributes.Virtual))
-    tb
-
-let compileMethod (parameters:(Type * Name) list) (mb:MethodBuilder) (exprList:TExpr list) =
-    let il = mb.GetILGenerator()
-    let parameters = parameters |> List.mapi(fun i (t,n) -> mb.DefineParameter(i+1, ParameterAttributes.In, n))
-    exprList|>List.fold(fun vars expr -> eval il vars parameters expr) Map.empty |> ignore
-    //Woder if I should check if ive already emitted a ret?
-    il.Emit(OpCodes.Ret)
-
-let compileClass (tb:TypeBuilder) body =
-    body|>List.iter(fun (TClassBody.TMethod(modifier, returnType, name, parameters, body)) ->
-                        ignore <| compileMethod parameters name body)
-    tb
-        
-let compile (ab, ast: TFile) =
-    compileFile ast
-    ab
-    *)
