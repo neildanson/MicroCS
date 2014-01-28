@@ -63,6 +63,10 @@ namespace TestNamespace
         }
     }
 
+    public struct TestStruct
+    {
+    }
+
     internal enum TestEnum
     {
         Value1, Value2, Terminator, Terminator2

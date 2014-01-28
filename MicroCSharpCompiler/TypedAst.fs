@@ -90,6 +90,23 @@ let rec toTypedExpr resolveType (variables:Dictionary<_,_>) (parameters:(_ * _) 
      | Float(f) -> TFloat(f)
      | Double(d) -> TDouble(d)
      | Bool(b) -> TBool(b)
+     | Add(lhs, rhs) -> TAdd(toTyped lhs, toTyped rhs)
+     | Subtract(lhs, rhs) -> TSubtract(toTyped lhs, toTyped rhs)
+     | Multiply(lhs, rhs) -> TMultiply(toTyped lhs, toTyped rhs)
+     | Divide(lhs, rhs) -> TDivide(toTyped lhs, toTyped rhs)
+     | Equals(lhs, rhs) -> TEquals(toTyped lhs, toTyped rhs)
+     | Modulus(lhs, rhs) -> TModulus(toTyped lhs, toTyped rhs)
+     | LessThan(lhs, rhs) -> TLessThan(toTyped lhs, toTyped rhs)
+     | GreaterThan(lhs,rhs) -> TGreaterThan(toTyped lhs, toTyped rhs)
+     | And(lhs,rhs) -> TAnd(toTyped lhs, toTyped rhs)
+     | Return(expr) -> TReturn(toTyped expr)
+     | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTyped expr))
+     | If(cond, ifTrue) -> TIf(toTyped cond, toTyped ifTrue)
+     | While(cond, body) -> TWhile(toTyped cond, toTyped body)
+     | DoWhile(body, cond) -> TDoWhile(toTyped body, toTyped cond)
+     | For(expr1, expr2, expr3, body) -> TFor(toTyped expr1, toTyped expr2, toTyped expr3, toTyped body)
+     | Assign(lhs, rhs) -> TAssign(toTyped lhs, toTyped rhs)
+     //The code below could do with being a little more robust
      | Call(name, parameters') ->
         //If theres a . then its either an instance call or a static call
         let firstDot = name.IndexOf('.')
@@ -118,46 +135,10 @@ let rec toTypedExpr resolveType (variables:Dictionary<_,_>) (parameters:(_ * _) 
             let parameters' = parameters' |> List.map(fun p -> toTyped p)
             let methodName = if name.StartsWith("this.") then name.Remove(0,5) else name
             let mi = getMethod (methodName, typeBuilder, parameters'|>List.map(getType)|> List.choose id |> List.toArray)
-            //TStaticCall(mi, parameters')
             TInstanceCall(TRef(typeBuilder, "this"), mi, parameters')
-            //failwith "'this' methods not supported yet"
      | Constructor(typeName, parameters') ->
         let t = resolveType typeName
         let parameters' = parameters' |> List.map(fun p -> toTyped p)
         let ci = getConstructor (t ,parameters'|>List.map(getType)|> List.choose id |> List.toArray)
         TConstructor(t, ci,  parameters')
-     | Add(lhs, rhs) -> TAdd(toTyped lhs, toTyped rhs)
-     | Subtract(lhs, rhs) -> TSubtract(toTyped lhs, toTyped rhs)
-     | Multiply(lhs, rhs) -> TMultiply(toTyped lhs, toTyped rhs)
-     | Divide(lhs, rhs) -> TDivide(toTyped lhs, toTyped rhs)
-     | Equals(lhs, rhs) -> TEquals(toTyped lhs, toTyped rhs)
-     | Modulus(lhs, rhs) -> TModulus(toTyped lhs, toTyped rhs)
-     | LessThan(lhs, rhs) -> TLessThan(toTyped lhs, toTyped rhs)
-     | GreaterThan(lhs,rhs) -> TGreaterThan(toTyped lhs, toTyped rhs)
-     | And(lhs,rhs) -> TAnd(toTyped lhs, toTyped rhs)
-     | Return(expr) -> TReturn(toTyped expr)
-     | Scope(exprs) -> TScope(exprs|>List.map(fun expr -> toTyped expr))
-     | If(cond, ifTrue) -> TIf(toTyped cond, toTyped ifTrue)
-     | While(cond, body) -> TWhile(toTyped cond, toTyped body)
-     | DoWhile(body, cond) -> TDoWhile(toTyped body, toTyped cond)
-     | For(expr1, expr2, expr3, body) -> TFor(toTyped expr1, toTyped expr2, toTyped expr3, toTyped body)
-     | Assign(lhs, rhs) ->
-        TAssign(toTyped lhs, toTyped rhs)
-
-(*
-let (|INTERFACEMETHOD|_|) (b, usings) =
-    match b with
-    | Method(typename, name, parameters) ->
-        let returnType = resolveType typename usings
-        let parameters = parameters|>List.map(fun (Parameter(typename, name)) -> (resolveType typename usings).Value, name) //todo - dont use .Value
-        Some(TInterfaceBody.TMethod(returnType, name, parameters))
-    | _ -> None
-
-let (|INTERFACE|_|) (mb:ModuleBuilder, body:NamespaceBody, namespaceName, usings) =
-    match body with
-    | Interface(name, visibility, body) ->
-        let definedType = mb.DefineType(namespaceName+"."+name, TypeAttributes.Abstract ||| TypeAttributes.Interface ||| accessModifierToTypeAttribute visibility)
-        let methods = body |> List.choose(fun b -> match (b, usings) with INTERFACEMETHOD(m) -> Some(m) | _ -> None)
-        Some(definedType, methods)
-    | _ -> None
-    *)
+     

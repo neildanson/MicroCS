@@ -1,9 +1,4 @@
-﻿// This project type requires the F# PowerPack at http://fsharppowerpack.codeplex.com/releases
-// Learn more about F# at http://fsharp.net
-// Original project template by Jomo Fisher based on work of Brian McNamara, Don Syme and Matt Valerio
-// This posting is provided "AS IS" with no warranties, and confers no rights.
-
-open System
+﻿open System
 open System.Reflection
 open System.Diagnostics
 open Microsoft.FSharp.Text.Lexing
@@ -16,7 +11,7 @@ open Parser
 open CSharpSource
 open Assembly
 
-let parse input =
+let Parse input =
     let tokenized = LexBuffer<char>.FromString(input)
     try
         Parser.start Lexer.tokenize tokenized
@@ -39,16 +34,16 @@ let Compile() =
     sw.Restart()
 
     //Perhaps a new appdomain is in order?
-    let ast = parse cSharpProgram
+    let ast = Parse cSharpProgram
 
     "CSharpExample"
     |> CompileFile
-    |> CompileBody ast
+    |> CompileTypeStubs ast
+    |> CompileMethodStubs
     |> Finish
     |> Save
 
     printf "Time to Compile %dms" sw.ElapsedMilliseconds
     Console.ReadLine() |> ignore
 
-IO.File.Delete("CSharpCompilerExample.dll")
 Compile()

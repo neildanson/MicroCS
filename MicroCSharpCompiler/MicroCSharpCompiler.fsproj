@@ -83,6 +83,7 @@
     <Compile Include="Definitions.fs" />
     <Compile Include="Interface.fs" />
     <Compile Include="Class.fs" />
+    <Compile Include="Struct.fs" />
     <Compile Include="Enum.fs" />
     <Compile Include="TypeResolver.fs" />
     <Compile Include="Assembly.fs" />
