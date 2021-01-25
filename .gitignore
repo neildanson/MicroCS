@@ -149,3 +149,8 @@ $RECYCLE.BIN/
 
 # Mac crap
 .DS_Store
+
+/.*
+/MicroCSharpCompiler/Lexer.fs
+/MicroCSharpCompiler/Parser.fs
+/MicroCSharpCompiler/Parser.fsi

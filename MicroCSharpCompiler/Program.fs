@@ -1,7 +1,7 @@
 ﻿open System
 open System.Reflection
 open System.Diagnostics
-open Microsoft.FSharp.Text.Lexing
+open FSharp.Text.Lexing
 open Ast
 open TypedAst
 open Compiler

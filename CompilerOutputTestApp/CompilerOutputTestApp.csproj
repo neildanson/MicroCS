@@ -35,7 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CSharpExample">
-      <HintPath>..\MicroCSharpCompiler\bin\Debug\CSharpExample.dll</HintPath>
+      <HintPath>..\MicroCSharpCompiler\bin\Debug\net472\CSharpExample.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
